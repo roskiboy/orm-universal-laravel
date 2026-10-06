@@ -1,0 +1,63 @@
+{
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "orm-universal/laravel",
+    "description": "Universal Data Platform - Laravel integration layer: service provider, adapters, Eloquent/Query Builder bridging, hybrid mode and UDE artisan tooling.",
+    "type": "library",
+    "license": "MIT",
+    "version": "0.1.0",
+    "authors": [
+        {
+            "name": "In-Tech"
+        }
+    ],
+    "homepage": "https://github.com/roskiboy/orm-universal-laravel",
+    "keywords": [
+        "laravel",
+        "persistence",
+        "orm",
+        "eloquent",
+        "ude"
+    ],
+    "require": {
+        "php": "^8.3",
+        "orm-universal/contracts": "^0.1",
+        "orm-universal/relational": "^0.1",
+        "orm-universal/nosql": "^0.1",
+        "illuminate/console": "^12.0 || ^13.0",
+        "illuminate/database": "^12.0 || ^13.0",
+        "illuminate/support": "^12.0 || ^13.0"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11.0 || ^12.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "OrmUniversal\\Laravel\\": "src/"
+        }
+    },
+    "support": {
+        "source": "https://github.com/roskiboy/orm-universal-laravel",
+        "issues": "https://github.com/roskiboy/orm-universal-laravel/issues"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "OrmUniversal\\Laravel\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "OrmUniversal\\Laravel\\OrmUniversalServiceProvider"
+            ],
+            "aliases": {
+                "OrmUniversal": "OrmUniversal\\Laravel\\Facades\\OrmUniversal"
+            }
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4', '8.5']
+    name: PHP ${{ matrix.php }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo, pdo_sqlite, mbstring
+          coverage: none
+
+      # The Laravel adapter depends on the other OrmUniversal packages.
+      # While those repositories are private, add a DEPS_TOKEN secret with
+      # read access; once they are public the token is optional.
+      - name: Clone OrmUniversal dependencies
+        env:
+          DEPS_TOKEN: ${{ secrets.DEPS_TOKEN }}
+        run: |
+          set -e
+          AUTH=""
+          if [ -n "$DEPS_TOKEN" ]; then AUTH="x-access-token:${DEPS_TOKEN}@"; fi
+          git clone --depth 1 "https://${AUTH}github.com/roskiboy/orm-universal-contracts.git" ../orm-universal-contracts
+          git clone --depth 1 "https://${AUTH}github.com/roskiboy/orm-universal-relational.git" ../orm-universal-relational
+          git clone --depth 1 "https://${AUTH}github.com/roskiboy/orm-universal-nosql.git" ../orm-universal-nosql
+
+      - name: Configure path repositories
+        run: |
+          composer config repositories.contracts path ../orm-universal-contracts
+          composer config repositories.relational path ../orm-universal-relational
+          composer config repositories.nosql path ../orm-universal-nosql
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Tests
+        run: vendor/bin/phpunit
+
+      - name: Static analysis
+        run: vendor/bin/phpstan analyse --no-progress
