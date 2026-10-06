@@ -16,6 +16,7 @@ use OrmUniversal\Relational\Context\ContextScope;
 use OrmUniversal\Relational\Dialect\DialectRegistry;
 use OrmUniversal\Relational\Observability\InMemoryProfiler;
 use OrmUniversal\Relational\Optimizer\Optimizer;
+use OrmUniversal\Relational\Plugin\PluginRegistry;
 use OrmUniversal\Relational\Type\TypeRegistry;
 
 /**
@@ -37,6 +38,7 @@ final class Ude
         private readonly LaravelFeatureRegistry $features = new LaravelFeatureRegistry,
         private readonly LaravelCompatibilityLayer $compatibility = new LaravelCompatibilityLayer,
         private readonly LaravelConnectionAdapter $connections = new LaravelConnectionAdapter,
+        private readonly PluginRegistry $plugins = new PluginRegistry,
     ) {}
 
     public static function create(): self
@@ -95,6 +97,24 @@ final class Ude
     public function connections(): LaravelConnectionAdapter
     {
         return $this->connections;
+    }
+
+    public function plugins(): PluginRegistry
+    {
+        return $this->plugins;
+    }
+
+    /**
+     * Registers and boots every plugin against this kernel and reports them.
+     *
+     * @return list<string>
+     */
+    public function bootPlugins(): array
+    {
+        $this->plugins->registerAll($this);
+        $this->plugins->bootAll($this);
+
+        return $this->plugins->names();
     }
 
     /**

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OrmUniversal\Laravel\Tests;
 
 use OrmUniversal\Contracts\Enums\CompatibilityMode;
+use OrmUniversal\Contracts\Exceptions\QueryException;
 use OrmUniversal\Laravel\Adapters\LaravelFeatureRegistry;
 use OrmUniversal\Laravel\Compatibility\LaravelCompatibilityLayer;
 use PHPUnit\Framework\TestCase;
@@ -13,7 +14,7 @@ final class CompatibilityTest extends TestCase
 {
     public function test_default_mode_is_hybrid_and_keeps_legacy_apis(): void
     {
-        $layer = new LaravelCompatibilityLayer();
+        $layer = new LaravelCompatibilityLayer;
 
         self::assertSame(CompatibilityMode::Hybrid, $layer->mode());
         self::assertTrue($layer->allowsLegacyApis());
@@ -24,7 +25,7 @@ final class CompatibilityTest extends TestCase
     {
         $layer = new LaravelCompatibilityLayer(CompatibilityMode::Strict);
 
-        $this->expectException(\OrmUniversal\Contracts\Exceptions\QueryException::class);
+        $this->expectException(QueryException::class);
         $layer->guardRawSql('delete from users');
     }
 
@@ -39,7 +40,7 @@ final class CompatibilityTest extends TestCase
 
     public function test_feature_detection_reports_laravel_capabilities(): void
     {
-        $features = new LaravelFeatureRegistry();
+        $features = new LaravelFeatureRegistry;
 
         self::assertTrue($features->supports('eloquent_builder_macros'));
         self::assertTrue($features->supports('connection_pdo_accessor'));

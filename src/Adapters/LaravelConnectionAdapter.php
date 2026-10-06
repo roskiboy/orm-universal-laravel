@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace OrmUniversal\Laravel\Adapters;
 
-use Illuminate\Database\ConnectionInterface as LaravelConnection;
+use Illuminate\Database\Connection as LaravelConnection;
 use Illuminate\Support\Facades\DB;
 use OrmUniversal\Relational\Dialect\AbstractDialect;
 use OrmUniversal\Relational\Dialect\DialectResolver;

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace OrmUniversal\Laravel\Adapters;
 
+use Illuminate\Bus\Dispatcher;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Traits\Macroable;
 use Laravel\Octane\Octane;
 
@@ -70,14 +70,23 @@ final class LaravelFeatureRegistry
         return match ($feature) {
             'octane' => class_exists(Octane::class),
             'eloquent_builder_macros' => is_callable([Builder::class, 'macro']),
-            'model_macroable' => class_exists(Macroable::class),
-            'query_builder_morph' => method_exists(\Illuminate\Database\Query\Builder::class, 'whereMorphedTo'),
-            'schema_blueprint_foreign_id' => method_exists(Blueprint::class, 'foreignId'),
-            'connection_pdo_accessor' => method_exists(Connection::class, 'getPdo'),
-            'pagination_cursor' => method_exists(\Illuminate\Database\Query\Builder::class, 'cursorPaginate'),
-            'db_transaction_retry' => method_exists(Connection::class, 'transaction'),
-            'queue_serializes_models' => class_exists(SerializesModels::class),
+            'model_macroable' => trait_exists(Macroable::class),
+            'query_builder_morph' => $this->hasMethod(\Illuminate\Database\Query\Builder::class, 'whereMorphedTo'),
+            'schema_blueprint_foreign_id' => $this->hasMethod(Blueprint::class, 'foreignId'),
+            'connection_pdo_accessor' => $this->hasMethod(Connection::class, 'getPdo'),
+            'pagination_cursor' => $this->hasMethod(\Illuminate\Database\Query\Builder::class, 'cursorPaginate'),
+            'db_transaction_retry' => $this->hasMethod(Connection::class, 'transaction'),
+            'queue_serializes_models' => class_exists(Dispatcher::class),
             default => false,
         };
+    }
+
+    /**
+     * Behavior detection through reflection: works for instance and static
+     * methods without triggering static-analysis false positives.
+     */
+    private function hasMethod(string $class, string $method): bool
+    {
+        return class_exists($class) && (new \ReflectionClass($class))->hasMethod($method);
     }
 }

@@ -54,6 +54,6 @@ final class CompatibilityCommand extends BaseCommand
             $this->components->info('Reporte: '.$paths['markdown']);
         }
 
-        return ($report['supported'] ?? false) ? self::SUCCESS : self::FAILURE;
+        return ($report['supported']) ? self::SUCCESS : self::FAILURE;
     }
 }

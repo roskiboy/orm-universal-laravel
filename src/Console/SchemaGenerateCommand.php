@@ -26,7 +26,7 @@ final class SchemaGenerateCommand extends BaseCommand
             return self::FAILURE;
         }
 
-        $model = ucfirst((string) preg_replace('/_(\w)/', fn ($m) => strtoupper($m[1]), rtrim($definition->name, 's')));
+        $model = ucfirst((string) preg_replace_callback('/_(\w)/', fn ($m) => strtoupper($m[1]), rtrim($definition->name, 's')));
         $timestamp = date('Y_m_d_His');
 
         $migration = $this->migrationSkeleton($definition);
