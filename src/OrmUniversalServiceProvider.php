@@ -18,7 +18,9 @@ use OrmUniversal\Laravel\Console\CacheClearCommand;
 use OrmUniversal\Laravel\Console\CompatibilityCommand;
 use OrmUniversal\Laravel\Console\DialectInspectCommand;
 use OrmUniversal\Laravel\Console\DialectListCommand;
+use OrmUniversal\Laravel\Console\DocsApiCommand;
 use OrmUniversal\Laravel\Console\DoctorCommand;
+use OrmUniversal\Laravel\Console\IndexAdviseCommand;
 use OrmUniversal\Laravel\Console\InstallCommand;
 use OrmUniversal\Laravel\Console\MapCommand;
 use OrmUniversal\Laravel\Console\MigrateAnalyzeCommand;
@@ -29,6 +31,7 @@ use OrmUniversal\Laravel\Console\QueryInspectCommand;
 use OrmUniversal\Laravel\Console\SchemaDiffCommand;
 use OrmUniversal\Laravel\Console\SchemaGenerateCommand;
 use OrmUniversal\Laravel\Console\SchemaInspectCommand;
+use OrmUniversal\Laravel\Console\StubsCommand;
 use OrmUniversal\Laravel\Facades\OrmUniversal;
 
 /**
@@ -80,6 +83,9 @@ final class OrmUniversalServiceProvider extends ServiceProvider
                 BenchmarkCommand::class,
                 CacheClearCommand::class,
                 CompatibilityCommand::class,
+                DocsApiCommand::class,
+                IndexAdviseCommand::class,
+                StubsCommand::class,
             ]);
         }
 

@@ -4,7 +4,6 @@
     "description": "Universal Data Platform - Laravel integration layer: service provider, adapters, Eloquent/Query Builder bridging, hybrid mode and UDE artisan tooling.",
     "type": "library",
     "license": "MIT",
-    "version": "0.1.0",
     "authors": [
         {
             "name": "In-Tech"

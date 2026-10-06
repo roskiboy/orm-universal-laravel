@@ -23,6 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Feature detection hardened: reflection based method detection plus `is_callable`
   for macro support; no version checks anywhere.
 
+### Tooling
+- Documentación completa en `docs/`, gobernanza, `AGENTS.md`, skill de agentes, prompts y ejemplos (fragmentos Laravel).
+- Release automation con auto-versionado por Conventional Commits y `tools/release.php`.
+- Benchmark Eloquent vs Query Builder vs UDE (`benchmarks/benchmark.php`) con verificación de regresión y artefacto en CI.
+- Nuevos comandos: `ude:docs:api`, `ude:index:advise`, `ude:stubs`.
+- Se eliminó el campo `version` de `composer.json`: la versión proviene del tag (SemVer).
+
 ## [0.1.0] - 2026-10-06
 
 ### Added

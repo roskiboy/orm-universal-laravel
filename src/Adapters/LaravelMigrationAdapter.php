@@ -42,6 +42,16 @@ final class LaravelMigrationAdapter
     }
 
     /**
+     * Dialect reported lock/blocking warnings for a schema operation.
+     *
+     * @return list<string>
+     */
+    public function warningsFor(SchemaOperation $operation): array
+    {
+        return $this->dialect->migrationWarnings($operation);
+    }
+
+    /**
      * @return array{destructive: bool, warnings: list<string>}
      */
     public function safetyReport(string $sql): array

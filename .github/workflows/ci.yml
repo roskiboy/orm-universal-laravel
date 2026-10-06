@@ -49,5 +49,14 @@ jobs:
       - name: Tests
         run: vendor/bin/phpunit
 
+      - name: Benchmark smoke (Eloquent vs UDE, SQLite)
+        run: php benchmarks/benchmark.php --rows=2000 --assert-vs-pdo=3.0 --json --markdown
+
       - name: Static analysis
         run: vendor/bin/phpstan analyse --no-progress
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: laravel-benchmark-results
+          path: benchmarks/results

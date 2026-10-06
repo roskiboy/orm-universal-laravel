@@ -53,6 +53,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | PSR-14 events
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, the platform emits QueryExecuted, TransactionLifecycle,
+    | N1Detected and RetryScheduled. Optional; no provider is mandatory.
+    |
+    */
+    'events' => [
+        'enabled' => (bool) env('UDE_EVENTS_ENABLED', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Query result cache (opt-in)
     |--------------------------------------------------------------------------
     */
