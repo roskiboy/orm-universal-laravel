@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-07
+
 ### Added
 - **Fast path AST en drivers `ude-*`**: cada driver resuelve a la conexión nativa con un
   `UdeQueryBuilder` que compila lecturas whitelisteadas al AST UDE y las ejecuta sobre el PDO de
