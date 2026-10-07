@@ -8,9 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use OrmUniversal\Contracts\ValueObjects\TableIdentifier;
 use OrmUniversal\Relational\Builder\QueryBuilder;
@@ -106,6 +110,45 @@ final class LaravelModelAdapter
 
     private function definitionFor(string $name, Relation $relation): ?RelationDefinition
     {
+        // Order matters: MorphTo extends BelongsTo and MorphToMany extends
+        // BelongsToMany, so polymorphic families are resolved first.
+        if ($relation instanceof MorphTo) {
+            $map = [];
+            foreach (Relation::morphMap() as $class => $type) {
+                if (is_string($class) && class_exists($class)) {
+                    $map[(string) $type] = (new $class)->getTable();
+                }
+            }
+
+            if ($map === []) {
+                // Without an explicit morph map the relation is not executable; never guess.
+                return null;
+            }
+
+            return RelationDefinition::morphTo(
+                $name,
+                $relation->getForeignKeyName(),
+                $relation->getMorphType(),
+                $map,
+                $relation->getOwnerKeyName() ?: 'id',
+            )->withMetadata(['model' => 'morph', 'morph_map' => $map]);
+        }
+
+        if ($relation instanceof MorphToMany) {
+            $inverse = str_contains($relation::class, 'MorphedByMany');
+
+            return RelationDefinition::morphToMany(
+                $name,
+                TableIdentifier::fromString($relation->getRelated()->getTable()),
+                TableIdentifier::fromString($relation->getTable()),
+                $relation->getForeignPivotKeyName(),
+                $relation->getRelatedPivotKeyName(),
+                $relation->getMorphType(),
+                $relation->getMorphClass(),
+                $inverse,
+            )->withMetadata(['model' => $relation->getRelated()::class]);
+        }
+
         if ($relation instanceof BelongsTo) {
             return RelationDefinition::belongsTo(
                 $name,
@@ -141,6 +184,30 @@ final class LaravelModelAdapter
                 $relation->getForeignPivotKeyName(),
                 $relation->getRelatedPivotKeyName(),
             )->withMetadata(['model' => $relation->getRelated()::class]);
+        }
+
+        if ($relation instanceof HasOneThrough || $relation instanceof HasManyThrough) {
+            // The through table is the qualifier of the qualified foreign key.
+            $qualified = $relation->getQualifiedForeignKeyName();
+            $throughTable = str_contains($qualified, '.') ? (string) strstr($qualified, '.', true) : '';
+
+            if ($throughTable === '') {
+                return null;
+            }
+
+            $factory = $relation instanceof HasOneThrough
+                ? RelationDefinition::hasOneThrough(...)
+                : RelationDefinition::hasManyThrough(...);
+
+            return $factory(
+                $name,
+                TableIdentifier::fromString($relation->getRelated()->getTable()),
+                TableIdentifier::fromString($throughTable),
+                $relation->getForeignKeyName(),
+                $relation->getLocalKeyName(),
+                $relation->getSecondLocalKeyName(),
+                $relation->getFirstKeyName(),
+            )->withMetadata(['model' => $relation->getRelated()::class, 'through' => $throughTable]);
         }
 
         if ($relation instanceof MorphOne) {
