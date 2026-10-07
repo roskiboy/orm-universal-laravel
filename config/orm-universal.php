@@ -87,13 +87,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Query result cache (opt-in)
+    | Query result cache (opt-in) and plan cache
     |--------------------------------------------------------------------------
+    |
+    | `enabled` caches results (opt-in, explicit invalidation). `plan` caches
+    | compiled SQL and defaults to on when intercept mode is active.
+    | `reuse` reuses duplicate reads inside a request (risk: stale reads).
+    |
     */
     'cache' => [
         'enabled' => (bool) env('UDE_CACHE_ENABLED', false),
         'store' => env('UDE_CACHE_STORE'),
         'ttl' => (int) env('UDE_CACHE_TTL', 60),
+        'plan' => env('UDE_PLAN_CACHE', true),
+        'plan_ttl' => (int) env('UDE_PLAN_CACHE_TTL', 3600),
+        'reuse' => env('UDE_QUERY_REUSE', false),
     ],
 
     /*

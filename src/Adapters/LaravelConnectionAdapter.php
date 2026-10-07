@@ -6,6 +6,7 @@ namespace OrmUniversal\Laravel\Adapters;
 
 use Illuminate\Database\Connection as LaravelConnection;
 use Illuminate\Support\Facades\DB;
+use OrmUniversal\Relational\Cache\QueryCache;
 use OrmUniversal\Relational\Dialect\AbstractDialect;
 use OrmUniversal\Relational\Dialect\DialectResolver;
 use OrmUniversal\Relational\Driver\PdoConnection;
@@ -26,16 +27,53 @@ final class LaravelConnectionAdapter
     /** @var array<string, PdoConnection> */
     private array $connections = [];
 
+    private ?QueryCache $queryCache = null;
+
+    private bool $reuseQueries = false;
+
+    public function withQueryCache(QueryCache $queryCache): self
+    {
+        $this->queryCache = $queryCache;
+
+        return $this;
+    }
+
+    public function hasQueryCache(): bool
+    {
+        return $this->queryCache !== null;
+    }
+
+    public function withQueryReuse(bool $enabled = true): self
+    {
+        $this->reuseQueries = $enabled;
+
+        return $this;
+    }
+
     public function executor(LaravelConnection|string $connection = 'default', ?InMemoryProfiler $profiler = null): QueryExecutor
     {
         $resolved = $connection instanceof LaravelConnection ? $connection : $this->resolve($connection);
         $name = $resolved->getName();
 
-        return $this->executors[$name] ??= new QueryExecutor(
+        if (isset($this->executors[$name])) {
+            return $this->executors[$name];
+        }
+
+        $executor = new QueryExecutor(
             $this->pdoConnection($resolved, $profiler),
             $this->dialect($resolved),
             $profiler,
         );
+
+        if ($this->queryCache !== null) {
+            $executor = $executor->withQueryCache($this->queryCache);
+        }
+
+        if ($this->reuseQueries) {
+            $executor = $executor->withQueryReuse(true);
+        }
+
+        return $this->executors[$name] = $executor;
     }
 
     public function dialectFor(LaravelConnection|string $connection = 'default'): AbstractDialect
@@ -64,10 +102,18 @@ final class LaravelConnectionAdapter
     public function flush(?string $name = null): void
     {
         if ($name === null) {
+            foreach ($this->executors as $executor) {
+                $executor->flushDeferred();
+            }
+
             $this->executors = [];
             $this->connections = [];
 
             return;
+        }
+
+        if (isset($this->executors[$name])) {
+            $this->executors[$name]->flushDeferred();
         }
 
         unset($this->executors[$name], $this->connections[$name]);

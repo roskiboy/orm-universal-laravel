@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OrmUniversal\Laravel;
 
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Queue\Events\JobFailed;
@@ -39,6 +40,7 @@ use OrmUniversal\Laravel\Console\SchemaGenerateCommand;
 use OrmUniversal\Laravel\Console\SchemaInspectCommand;
 use OrmUniversal\Laravel\Console\StubsCommand;
 use OrmUniversal\Laravel\Facades\OrmUniversal;
+use OrmUniversal\Relational\Cache\QueryCache;
 
 /**
  * Laravel integration entry point. Registers the kernel, adapters, Octane-safe
@@ -58,6 +60,7 @@ final class OrmUniversalServiceProvider extends ServiceProvider
                 (string) ($app['config']->get('orm-universal.compatibility_mode') ?? 'hybrid'),
             ));
             $kernel->bootNoSql((array) $app['config']->get('orm-universal.nosql', []));
+            $this->configureConnectionCache($app, $kernel);
 
             return $kernel;
         });
@@ -106,6 +109,48 @@ final class OrmUniversalServiceProvider extends ServiceProvider
         $this->registerOctaneResets();
         $this->registerAutoMonitor();
         UdeConnectionFactory::register($this->app['db']);
+    }
+
+    private function configureConnectionCache(Application $app, Ude $kernel): void
+    {
+        $cache = (array) $app['config']->get('orm-universal.cache', []);
+
+        $interceptActive = $this->boolOption($app['config']->get('orm-universal.auto.intercept'), false)
+            || (string) $app['config']->get('orm-universal.auto.mode', 'monitor') === 'intercept';
+
+        if ($this->boolOption($cache['plan'] ?? null, $interceptActive) && $app->bound('cache')) {
+            try {
+                $store = $app['cache']->store($cache['store'] ?? null);
+                $kernel->connections()->withQueryCache(new QueryCache(
+                    $store,
+                    'ude',
+                    (int) ($cache['plan_ttl'] ?? 3600),
+                ));
+            } catch (\Throwable) {
+                // Plan cache is an optional optimization; compile without it.
+            }
+        }
+
+        if ($this->boolOption($cache['reuse'] ?? null, false)) {
+            $kernel->connections()->withQueryReuse(true);
+        }
+    }
+
+    private function boolOption(mixed $value, bool $default): bool
+    {
+        if ($value === null) {
+            return $default;
+        }
+
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_string($value)) {
+            return filter_var($value, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? $default;
+        }
+
+        return (bool) $value;
     }
 
     private function registerAutoMonitor(): void

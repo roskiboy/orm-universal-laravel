@@ -22,6 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `nikic/php-parser` (reemplazo quirúrgico del literal, sin reformatear el archivo). Flags
   `--connection=*`, `--path=`, `--dry-run` (default), `--diff`, `--backup`, `--interactive`,
   `--write` y guard de árbol git sucio (`--force`).
+- **Plan cache** activado por defecto cuando intercept está activo (`cache.plan`, `plan_ttl`) y
+  **reuso opt-in** de lecturas duplicadas (`UDE_QUERY_REUSE=true`, riesgo de lecturas stale
+  documentado).
+- `ude:index:advise --from-profiler`: recomendaciones de índices a partir de las muestras de
+  N+1/consultas lentas del monitor automático.
+- `flushDeferred()` en el flush de Octane/queue: los `defer()` pendientes se resuelven por lote en
+  el límite del request.
 
 ## [0.1.2] - 2026-10-07
 

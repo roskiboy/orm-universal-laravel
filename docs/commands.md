@@ -19,6 +19,7 @@ Los 21 comandos registrados por `OrmUniversalServiceProvider`. Todos extienden
 | `ude:migrate:analyze` | `{--json}` | Clasifica migraciones: compatible, convertible, requiere revisión, no soportado, específico del motor |
 | `ude:migrate:codemod` | `{--diff} {--backup} {--interactive} {--path=*}` | Codemod conservador: sugiere conversiones sin modificar archivos (dry-run implícito) |
 | `ude:auto:enable` | `{--connection=*} {--path=} {--dry-run} {--diff} {--backup} {--interactive} {--write} {--force}` | Convierte los `driver` de `config/database.php` a `ude-*` con php-parser (reemplazo quirúrgico, backup opcional, git-dirty guard) |
+| `ude:index:advise` | `{table?} {--connection=} {--json} {--from-profiler}` | Recomienda índices desde el esquema real o desde las muestras del monitor (`--from-profiler`); nunca crea índices |
 | `ude:query:inspect` | `{table} {--connection=} {--select=*} {--where=*} {--limit=10} {--explain}` | Compila e inspecciona una consulta: SQL, bindings, plan, fingerprint y capacidades |
 | `ude:benchmark` | `{table} {--rows=1000} {--connection=}` | Benchmark reproducible: Laravel Query Builder vs UDE (zero/light/Eloquent) |
 | `ude:cache:clear` | `{--connection=}` | Limpia caches de la plataforma: metadatos, conexiones, profiler y contexto |
