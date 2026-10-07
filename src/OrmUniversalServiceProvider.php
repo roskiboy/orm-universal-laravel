@@ -28,6 +28,7 @@ use OrmUniversal\Laravel\Console\DialectListCommand;
 use OrmUniversal\Laravel\Console\DocsApiCommand;
 use OrmUniversal\Laravel\Console\DoctorCommand;
 use OrmUniversal\Laravel\Console\IndexAdviseCommand;
+use OrmUniversal\Laravel\Console\IndexGenerateCommand;
 use OrmUniversal\Laravel\Console\InstallCommand;
 use OrmUniversal\Laravel\Console\MapCommand;
 use OrmUniversal\Laravel\Console\MigrateAnalyzeCommand;
@@ -100,6 +101,7 @@ final class OrmUniversalServiceProvider extends ServiceProvider
                 CompatibilityCommand::class,
                 DocsApiCommand::class,
                 IndexAdviseCommand::class,
+                IndexGenerateCommand::class,
                 StubsCommand::class,
                 AutoReportCommand::class,
                 AutoEnableCommand::class,

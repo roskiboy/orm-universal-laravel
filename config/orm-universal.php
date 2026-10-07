@@ -99,7 +99,7 @@ return [
         'enabled' => (bool) env('UDE_CACHE_ENABLED', false),
         'store' => env('UDE_CACHE_STORE'),
         'ttl' => (int) env('UDE_CACHE_TTL', 60),
-        'plan' => env('UDE_PLAN_CACHE', true),
+        'plan' => env('UDE_PLAN_CACHE'),
         'plan_ttl' => (int) env('UDE_PLAN_CACHE_TTL', 3600),
         'reuse' => env('UDE_QUERY_REUSE', false),
     ],
@@ -113,6 +113,16 @@ return [
     |
     */
     'destructive_statements' => env('UDE_DESTRUCTIVE_STATEMENTS', 'warn'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Hot paths (opt-in per-read UDE rewrites)
+    |--------------------------------------------------------------------------
+    */
+    'hotpaths' => [
+        'treasury_summary' => env('UDE_HOTPATH_TREASURY_SUMMARY', false),
+        'banking_range_totals' => env('UDE_HOTPATH_BANKING_TOTALS', false),
+    ],
 
     /*
     |--------------------------------------------------------------------------

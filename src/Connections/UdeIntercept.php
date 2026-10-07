@@ -7,6 +7,7 @@ namespace OrmUniversal\Laravel\Connections;
 use Illuminate\Container\Container;
 use Illuminate\Database\Connection;
 use OrmUniversal\Laravel\Adapters\LaravelConnectionAdapter;
+use OrmUniversal\Laravel\Ude;
 use OrmUniversal\Relational\Execution\QueryExecutor;
 use WeakMap;
 
@@ -60,6 +61,12 @@ final class UdeIntercept
 
     public static function executor(Connection $connection): QueryExecutor
     {
+        $container = Container::getInstance();
+
+        if ($container->bound(Ude::class)) {
+            return $container->make(Ude::class)->connections()->executor($connection);
+        }
+
         self::$executors ??= new WeakMap;
         self::$adapter ??= new LaravelConnectionAdapter;
 

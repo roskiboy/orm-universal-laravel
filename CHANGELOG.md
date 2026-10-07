@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **`ude:index:generate`**: convierte las recomendaciones de `ude:index:advise` (esquema o
+  `--from-profiler`) en una migración Laravel; dry-run por defecto, `--write`/`--force`. Incluye
+  `Analysis\IndexAdvisor` (dedupe FK/`*_id`) e `Analysis\IndexMigrationGenerator` testables.
+- Config `hotpaths` (`treasury_summary`, `banking_range_totals`) para reescrituras UDE opt-in por
+  lectura, con fallback Eloquent.
+
+### Fixed
+- `UdeIntercept::executor()` ahora usa el adapter del kernel: el plan cache y el profiler
+  configurados en el provider llegan al fast path (antes creaba un adapter propio sin cache).
+- `Ude::flush()` limpia también executors/conexiones del adapter (deferred + sin PDO stale en
+  Octane/queue).
+- `cache.plan` sin `UDE_PLAN_CACHE` hereda del modo intercept (antes quedaba activo siempre).
+
 ## [0.1.4] - 2026-10-07
 
 ### Added

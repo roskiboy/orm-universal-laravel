@@ -154,5 +154,6 @@ final class Ude
     {
         $this->contexts->flush();
         $this->profiler->reset();
+        $this->connections->flush();
     }
 }

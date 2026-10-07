@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OrmUniversal\Laravel\Console;
 
 use OrmUniversal\Contracts\ValueObjects\TableIdentifier;
+use OrmUniversal\Laravel\Analysis\IndexAdvisor;
 use OrmUniversal\Laravel\Analysis\ProfilerIndexAdvisor;
 use OrmUniversal\Laravel\Auto\VanillaMonitor;
 use OrmUniversal\Relational\Schema\SchemaInspectorFactory;
@@ -32,6 +33,7 @@ final class IndexAdviseCommand extends BaseCommand
             return self::SUCCESS;
         }
 
+        $advisor = new IndexAdvisor;
         $advice = [];
         foreach ($tables as $table) {
             $definition = $inspector->table(new TableIdentifier($table));
@@ -39,42 +41,7 @@ final class IndexAdviseCommand extends BaseCommand
                 continue;
             }
 
-            $coveredFirst = [];
-            $indexed = [];
-            foreach ($definition->indexes as $index) {
-                $first = strtolower($index->columns[0] ?? '');
-                if ($first !== '') {
-                    $coveredFirst[$first] = true;
-                }
-                foreach ($index->columns as $column) {
-                    $indexed[strtolower($column)] = true;
-                }
-            }
-
-            foreach ($definition->foreignKeys as $foreignKey) {
-                foreach ($foreignKey->columns as $column) {
-                    if (! isset($coveredFirst[strtolower($column)])) {
-                        $advice[] = [
-                            'table' => $table,
-                            'column' => $column,
-                            'reason' => 'Foreign key column not covered by an index prefix (constraint '.$foreignKey->name.').',
-                            'suggestion' => 'CREATE INDEX '.$table.'_'.$column.'_idx ON '.$table.' ('.$column.');',
-                        ];
-                    }
-                }
-            }
-
-            foreach ($definition->columns as $column) {
-                $name = strtolower($column->name);
-                if (str_ends_with($name, '_id') && ! isset($indexed[$name])) {
-                    $advice[] = [
-                        'table' => $table,
-                        'column' => $column->name,
-                        'reason' => 'Column looks like a foreign key but has no index.',
-                        'suggestion' => 'CREATE INDEX '.$table.'_'.$column->name.'_idx ON '.$table.' ('.$column->name.');',
-                    ];
-                }
-            }
+            $advice = array_merge($advice, $advisor->adviseTable($table, $definition));
         }
 
         $report = ['tables_analyzed' => count($tables), 'recommendations' => $advice];
