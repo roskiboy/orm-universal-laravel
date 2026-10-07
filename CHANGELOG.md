@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   kill switch absoluto `UDE_AUTO_INTERCEPT=false`. `ude-oracle` queda passthrough documentado.
 - Tests de paridad fila a fila (SQLite y MariaDB, decimales como string), eventos de modelo y
   `QueryExecuted`, fallback de formas no soportadas, gate tri-estado y kill switch.
+- **`ude:auto:enable`**: convierte los `driver` de `config/database.php` a `ude-*` con
+  `nikic/php-parser` (reemplazo quirúrgico del literal, sin reformatear el archivo). Flags
+  `--connection=*`, `--path=`, `--dry-run` (default), `--diff`, `--backup`, `--interactive`,
+  `--write` y guard de árbol git sucio (`--force`).
 
 ## [0.1.2] - 2026-10-07
 

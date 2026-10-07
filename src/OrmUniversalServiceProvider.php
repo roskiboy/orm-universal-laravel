@@ -17,6 +17,7 @@ use OrmUniversal\Contracts\Enums\CompatibilityMode;
 use OrmUniversal\Laravel\Auto\VanillaMonitor;
 use OrmUniversal\Laravel\Connections\UdeConnectionFactory;
 use OrmUniversal\Laravel\Connections\UdeIntercept;
+use OrmUniversal\Laravel\Console\AutoEnableCommand;
 use OrmUniversal\Laravel\Console\AutoReportCommand;
 use OrmUniversal\Laravel\Console\BenchmarkCommand;
 use OrmUniversal\Laravel\Console\CacheClearCommand;
@@ -97,6 +98,7 @@ final class OrmUniversalServiceProvider extends ServiceProvider
                 IndexAdviseCommand::class,
                 StubsCommand::class,
                 AutoReportCommand::class,
+                AutoEnableCommand::class,
             ]);
         }
 

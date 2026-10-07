@@ -1,6 +1,6 @@
 # Comandos `ude:*` — orm-universal/laravel
 
-Los 16 comandos registrados por `OrmUniversalServiceProvider`. Todos extienden
+Los 21 comandos registrados por `OrmUniversalServiceProvider`. Todos extienden
 `BaseCommand` y resuelven el executor con la conexión indicada.
 
 | Comando | Firma | Qué hace |
@@ -18,6 +18,7 @@ Los 16 comandos registrados por `OrmUniversalServiceProvider`. Todos extienden
 | `ude:project:analyze` | `{--json} {--path=}` | Analiza modelos, queries, llamadas `DB::`, SQL crudo, migraciones y servicios |
 | `ude:migrate:analyze` | `{--json}` | Clasifica migraciones: compatible, convertible, requiere revisión, no soportado, específico del motor |
 | `ude:migrate:codemod` | `{--diff} {--backup} {--interactive} {--path=*}` | Codemod conservador: sugiere conversiones sin modificar archivos (dry-run implícito) |
+| `ude:auto:enable` | `{--connection=*} {--path=} {--dry-run} {--diff} {--backup} {--interactive} {--write} {--force}` | Convierte los `driver` de `config/database.php` a `ude-*` con php-parser (reemplazo quirúrgico, backup opcional, git-dirty guard) |
 | `ude:query:inspect` | `{table} {--connection=} {--select=*} {--where=*} {--limit=10} {--explain}` | Compila e inspecciona una consulta: SQL, bindings, plan, fingerprint y capacidades |
 | `ude:benchmark` | `{table} {--rows=1000} {--connection=}` | Benchmark reproducible: Laravel Query Builder vs UDE (zero/light/Eloquent) |
 | `ude:cache:clear` | `{--connection=}` | Limpia caches de la plataforma: metadatos, conexiones, profiler y contexto |
@@ -37,6 +38,9 @@ php artisan ude:cache:clear
 
 - `ude:schema:generate` no escribe sin `--write` y no sobrescribe sin `--force`.
 - `ude:migrate:codemod` es dry-run por defecto: nunca modifica archivos silenciosamente.
+- `ude:auto:enable` es dry-run por defecto; solo escribe con `--write` y se niega si
+  `config/database.php` tiene cambios sin commitear (salvo `--force`). Recomendado:
+  rama/commit previo + `--backup`.
 - La política de sentencias destructivas (`destructive_statements`) se respeta en la
   ejecución de migraciones a través de `LaravelMigrationAdapter`.
 
