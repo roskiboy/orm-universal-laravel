@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-10-07
+
 ### Added
 - **`ude:index:generate`**: convierte las recomendaciones de `ude:index:advise` (esquema o
   `--from-profiler`) en una migración Laravel; dry-run por defecto, `--write`/`--force`. Incluye
