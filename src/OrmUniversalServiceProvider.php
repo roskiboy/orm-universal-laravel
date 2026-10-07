@@ -15,6 +15,7 @@ use Laravel\Octane\Events\TaskTerminated;
 use Laravel\Octane\Events\TickTerminated;
 use OrmUniversal\Contracts\Enums\CompatibilityMode;
 use OrmUniversal\Laravel\Auto\VanillaMonitor;
+use OrmUniversal\Laravel\Connections\UdeConnectionFactory;
 use OrmUniversal\Laravel\Console\AutoReportCommand;
 use OrmUniversal\Laravel\Console\BenchmarkCommand;
 use OrmUniversal\Laravel\Console\CacheClearCommand;
@@ -101,6 +102,7 @@ final class OrmUniversalServiceProvider extends ServiceProvider
         $this->registerEloquentBridge();
         $this->registerOctaneResets();
         $this->registerAutoMonitor();
+        UdeConnectionFactory::register($this->app['db']);
     }
 
     private function registerAutoMonitor(): void
