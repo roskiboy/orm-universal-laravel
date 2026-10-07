@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Fast path AST en drivers `ude-*`**: cada driver resuelve a la conexión nativa con un
+  `UdeQueryBuilder` que compila lecturas whitelisteadas al AST UDE y las ejecuta sobre el PDO de
+  Laravel (mismos eventos, transacciones, read/write y tipos); las formas no soportadas delegan al
+  builder nativo sin cambiar resultados. Incluye `cursor()` sin buffer y agregados directos.
+- Activación opt-in con `auto.mode=intercept` / `UDE_AUTO=intercept` o `auto.intercept=true`;
+  kill switch absoluto `UDE_AUTO_INTERCEPT=false`. `ude-oracle` queda passthrough documentado.
+- Tests de paridad fila a fila (SQLite y MariaDB, decimales como string), eventos de modelo y
+  `QueryExecuted`, fallback de formas no soportadas, gate tri-estado y kill switch.
+
 ## [0.1.2] - 2026-10-07
 
 ### Added

@@ -70,12 +70,17 @@ return [
     |--------------------------------------------------------------------------
     |
     | monitor: zero-risk observability (N+1, duplicates, slow queries).
-    | off: disables the monitor entirely. The transparent intercept mode is
-    | enabled per connection with ude-* drivers (opt-in).
+    | intercept: monitor + transparent AST fast path on ude-* connections.
+    | off: disables the automatic layer entirely.
+    |
+    | intercept accepts strict booleans: true forces the fast path on,
+    | false (env UDE_AUTO_INTERCEPT=false) is an absolute kill switch.
+    | When unset, `mode=intercept` decides.
     |
     */
     'auto' => [
         'mode' => env('UDE_AUTO', 'monitor'),
+        'intercept' => env('UDE_AUTO_INTERCEPT'),
         'slow_ms' => (int) env('UDE_AUTO_SLOW_MS', 200),
         'n_plus_one_threshold' => (int) env('UDE_AUTO_N1_THRESHOLD', 3),
     ],

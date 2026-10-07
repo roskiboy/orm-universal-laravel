@@ -74,6 +74,42 @@ El provider registra `Ude::flush()` en `RequestTerminated`, `TaskTerminated`,
 No hay estado global mutable fuera del kernel; en workers de larga duración el flush es
 la frontera de aislamiento.
 
+## Fast path AST (intercepto opt-in)
+
+Los drivers `ude-*` (`ude-sqlite`, `ude-mysql`, `ude-mariadb`, `ude-pgsql`, `ude-sqlsrv`)
+resuelven a la conexión nativa de Laravel con un query builder propio que añade un fast
+path AST, activado con:
+
+```dotenv
+UDE_AUTO=intercept
+# o explícito:
+UDE_AUTO_INTERCEPT=true
+# kill switch absoluto:
+UDE_AUTO_INTERCEPT=false
+# config/orm-universal.php
+'auto' => ['mode' => 'intercept', 'intercept' => null],
+```
+
+Reglas de seguridad del fast path:
+
+- Solo se optimizan formas **whitelisteadas** (from tabla simple, columns string/`*`,
+  wheres Basic/In/Null/NotNull/Between/Column/Nested, joins de una comparación de
+  columnas, orders, groupBy/having Basic, limit/offset, agregados simples). Cualquier
+  otra forma delega en `parent::` sin alterar resultados.
+- El SQL se compila con el compilador UDE pero se ejecuta sobre la **misma conexión
+  Laravel** (mismo PDO, transacción, `useWritePdo` y fetch mode): se preservan
+  `QueryExecuted`, `DB::listen`, el monitor automático y los eventos de modelo.
+- Eloquent hidrata igual (filas `stdClass`), incluidos casts, accessors y soft deletes
+  explícitos.
+- Las conexiones con driver nativo nunca se interceptan, y `UDE_AUTO_INTERCEPT=false`
+  desactiva el fast path incluso con `mode=intercept`.
+- `ude-oracle` queda passthrough: Laravel no incluye conexión Oracle; requiere un
+  resolver OCI8 en la aplicación.
+
+Verificado fila a fila contra vanilla en SQLite y MariaDB (incluye decimales como
+string, nulls, joins, agregados y paginación por keyset). Integración SQL Server
+implementada a nivel de compilador/conexión, pendiente de infraestructura.
+
 ## Adopción progresiva sugerida
 
 1. `legacy`/`compatibility`: medir con `ude:project:analyze` y `ude:map`.

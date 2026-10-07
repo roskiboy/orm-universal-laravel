@@ -97,10 +97,15 @@ final class LaravelConnectionAdapter
         $pdo = $connection->getPdo();
         $version = (string) $pdo->getAttribute(\PDO::ATTR_SERVER_VERSION);
 
-        if ($connection->getDriverName() === 'sqlite') {
+        $driver = (string) $connection->getDriverName();
+        if (str_starts_with($driver, 'ude-')) {
+            $driver = substr($driver, 4);
+        }
+
+        if ($driver === 'sqlite') {
             $version = (string) $pdo->query('select sqlite_version()')->fetchColumn();
         }
 
-        return DialectResolver::resolve($connection->getDriverName(), $version);
+        return DialectResolver::resolve($driver, $version);
     }
 }

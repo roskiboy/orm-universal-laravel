@@ -16,6 +16,7 @@ use Laravel\Octane\Events\TickTerminated;
 use OrmUniversal\Contracts\Enums\CompatibilityMode;
 use OrmUniversal\Laravel\Auto\VanillaMonitor;
 use OrmUniversal\Laravel\Connections\UdeConnectionFactory;
+use OrmUniversal\Laravel\Connections\UdeIntercept;
 use OrmUniversal\Laravel\Console\AutoReportCommand;
 use OrmUniversal\Laravel\Console\BenchmarkCommand;
 use OrmUniversal\Laravel\Console\CacheClearCommand;
@@ -149,6 +150,8 @@ final class OrmUniversalServiceProvider extends ServiceProvider
             if ($this->app->bound(VanillaMonitor::class)) {
                 $this->app->make(VanillaMonitor::class)->reset();
             }
+
+            UdeIntercept::flush();
         };
 
         if (class_exists(RequestTerminated::class)) {
