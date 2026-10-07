@@ -7,6 +7,7 @@ declare(strict_types=1);
  * UDE_MYSQL_* / UDE_PGSQL_* to point at a real server.
  *
  *   php benchmarks/benchmark.php --rows=5000 --json --markdown --assert-vs-pdo=3.0
+ *   php benchmarks/benchmark.php --rows=10000 --assert-intercept-vs-vanilla=1.75
  */
 $autoload = __DIR__.'/../vendor/autoload.php';
 if (! is_file($autoload)) {
@@ -14,23 +15,36 @@ if (! is_file($autoload)) {
 }
 require $autoload;
 
+use Illuminate\Container\Container;
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Application;
+use OrmUniversal\Laravel\Connections\UdeConnectionFactory;
 use OrmUniversal\Relational\Builder\QueryBuilder;
 use OrmUniversal\Relational\Dialect\DialectResolver;
 use OrmUniversal\Relational\Driver\PdoConnection;
 use OrmUniversal\Relational\Execution\QueryExecutor;
 
-$options = getopt('', ['rows::', 'json', 'markdown', 'assert-vs-pdo::', 'output::']);
+$options = getopt('', ['rows::', 'json', 'markdown', 'assert-vs-pdo::', 'assert-intercept-vs-vanilla::', 'output::']);
 $rows = max(100, (int) ($options['rows'] ?? 5000));
 $assertFactor = isset($options['assert-vs-pdo']) ? (float) $options['assert-vs-pdo'] : null;
+$interceptFactor = isset($options['assert-intercept-vs-vanilla']) ? (float) $options['assert-intercept-vs-vanilla'] : null;
 $output = (string) ($options['output'] ?? __DIR__.'/results');
 
+$databaseFile = tempnam(sys_get_temp_dir(), 'ude-bench');
+
 $capsule = new Capsule;
-$capsule->addConnection(['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '']);
+$capsule->addConnection(['driver' => 'sqlite', 'database' => $databaseFile, 'prefix' => '']);
 $capsule->setAsGlobal();
 $capsule->bootEloquent();
+
+$container = $capsule->getContainer();
+Container::setInstance($container);
+$container['config']['orm-universal.auto.mode'] = 'intercept';
+$container['config']['orm-universal.auto.intercept'] = null;
+
+UdeConnectionFactory::register($capsule->getDatabaseManager());
+$capsule->addConnection(['driver' => 'ude-sqlite', 'database' => $databaseFile, 'prefix' => ''], 'ude');
 
 $pdo = $capsule->getConnection()->getPdo();
 $pdo->exec('create table bench_orders (id integer primary key, customer varchar(100) not null, total decimal(10,2) not null, status varchar(20) not null)');
@@ -55,6 +69,11 @@ class BenchOrder extends Model
     protected $casts = ['total' => 'decimal:2'];
 }
 
+class BenchOrderIntercepted extends BenchOrder
+{
+    protected $connection = 'ude';
+}
+
 $dialect = DialectResolver::resolve('sqlite', (string) $pdo->query('select sqlite_version()')->fetchColumn());
 $executor = new QueryExecutor(new PdoConnection($pdo, 'bench-laravel'), $dialect);
 
@@ -75,6 +94,7 @@ $measure = static function (string $label, callable $operation) use (&$results):
 };
 
 $measure('eloquent_models', fn (): int => BenchOrder::query()->get()->count());
+$measure('eloquent_intercepted', fn (): int => BenchOrderIntercepted::query()->get()->count());
 $measure('eloquent_to_array', fn (): int => count(BenchOrder::query()->get()->toArray()));
 $measure('query_builder', fn (): int => Capsule::table('bench_orders')->get()->count());
 $measure('pdo_fetch_all', fn (): int => count($pdo->query('select * from bench_orders')->fetchAll(PDO::FETCH_ASSOC)));
@@ -141,3 +161,25 @@ if ($assertFactor !== null) {
 
     echo sprintf("Assertion OK: UDE light within %.2fx of raw PDO.\n", $assertFactor);
 }
+
+if ($interceptFactor !== null) {
+    $vanilla = null;
+    $intercepted = null;
+    foreach ($results as $index => $row) {
+        if ($row['mode'] === 'eloquent_models') {
+            $vanilla = $index;
+        }
+        if ($row['mode'] === 'eloquent_intercepted') {
+            $intercepted = $index;
+        }
+    }
+
+    if ($vanilla === null || $intercepted === null || $results[$intercepted]['time_ms'] > $results[$vanilla]['time_ms'] * $interceptFactor) {
+        fwrite(STDERR, 'Regression: intercepted Eloquent outside the allowed factor versus vanilla Eloquent.'.PHP_EOL);
+        exit(1);
+    }
+
+    echo sprintf("Assertion OK: intercepted Eloquent within %.2fx of vanilla Eloquent.\n", $interceptFactor);
+}
+
+@unlink($databaseFile);

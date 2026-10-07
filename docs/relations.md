@@ -74,7 +74,32 @@ foreach ($adapter->relationDefinitions(App\Models\Seller::class) as $relation) {
 
 - Las relaciones se descubren por convención de Eloquent (métodos que devuelven
   `Relation`); las definiciones dinámicas construidas en runtime no se detectan.
-- `MorphTo` no se traduce: usa `custom()` si necesitas modelarla.
-- `HasOneThrough`/`HasManyThrough` existen como constantes y fábrica genérica, pero el
-  adaptador no las infiere desde Eloquent en esta versión.
+- `MorphTo` solo se traduce con morph map explícito; sin él no se adivina.
 - El adaptador no ejecuta `load()` ni altera el modelo: solo describe.
+
+## Agregados de relación y paridad
+
+`LaravelModelAdapter::relationDefinitions()` construye las 11 familias (hasOne/hasMany,
+belongsTo, belongsToMany, through, morph*, morphedByMany). Con un `RelationRegistry`
+puedes usar agregados UDE equivalentes a Eloquent:
+
+```php
+use OrmUniversal\Relational\Relation\RelationRegistry;
+
+$registry = new RelationRegistry();
+foreach ((new LaravelModelAdapter)->relationDefinitions(Seller::class) as $definition) {
+    $registry->register('sellers', $definition);
+}
+
+$rows = OrmUniversal::table('sellers')
+    ->usingRelations($registry)
+    ->withCount('treasuryMovements')          // alias treasury_movements_count
+    ->withSum('treasuryMovements', 'amount')  // alias treasury_movements_sum_amount
+    ->orderBy('id')
+    ->get();
+```
+
+Paridad verificada fila a fila contra `withCount`/`withSum` de Eloquent en SQLite
+(`tests/Feature/Ude/RelationParityTest.php`), incluidos paginadores nativos
+(`LaravelPaginatorAdapter`) y las 11 familias en la suite del Core
+(`RelationFamilyTest`, `RelationAggregateTest`).

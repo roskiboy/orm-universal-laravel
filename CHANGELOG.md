@@ -33,6 +33,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`LaravelModelAdapter`) y sugiere/corrige con php-parser (`--dry-run`/`--diff`/`--write`/
   `--backup`); los decimales castados como float se reportan como error. Solo escribe modelos con
   propiedad `$casts` y nunca sin `--write`.
+- Benchmark `eloquent_intercepted` con umbral de no-regresión
+  (`--assert-intercept-vs-vanilla`, CI 2k) y reportes versionados 10k/100k/1M en
+  `benchmarks/results/`.
+- Paridad de relaciones (`withCount`/`withSum`) y paginadores nativos vs Eloquent en la suite de la
+  aplicación (`tests/Feature/Ude/RelationParityTest.php`).
 
 ## [0.1.2] - 2026-10-07
 
