@@ -122,6 +122,7 @@ return [
     'hotpaths' => [
         'treasury_summary' => env('UDE_HOTPATH_TREASURY_SUMMARY', false),
         'banking_range_totals' => env('UDE_HOTPATH_BANKING_TOTALS', false),
+        'dashboard' => env('UDE_HOTPATH_DASHBOARD', false),
     ],
 
     /*
