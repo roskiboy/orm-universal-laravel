@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OrmUniversal\Laravel;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Support\ServiceProvider;
@@ -13,6 +14,8 @@ use Laravel\Octane\Events\RequestTerminated;
 use Laravel\Octane\Events\TaskTerminated;
 use Laravel\Octane\Events\TickTerminated;
 use OrmUniversal\Contracts\Enums\CompatibilityMode;
+use OrmUniversal\Laravel\Auto\VanillaMonitor;
+use OrmUniversal\Laravel\Console\AutoReportCommand;
 use OrmUniversal\Laravel\Console\BenchmarkCommand;
 use OrmUniversal\Laravel\Console\CacheClearCommand;
 use OrmUniversal\Laravel\Console\CompatibilityCommand;
@@ -57,6 +60,11 @@ final class OrmUniversalServiceProvider extends ServiceProvider
         });
 
         $this->app->alias(Ude::class, 'orm-universal');
+
+        $this->app->singleton(VanillaMonitor::class, fn (): VanillaMonitor => new VanillaMonitor(
+            slowMs: (int) $this->app['config']->get('orm-universal.auto.slow_ms', 200),
+            n1Threshold: (int) $this->app['config']->get('orm-universal.auto.n_plus_one_threshold', 3),
+        ));
     }
 
     public function boot(): void
@@ -86,11 +94,30 @@ final class OrmUniversalServiceProvider extends ServiceProvider
                 DocsApiCommand::class,
                 IndexAdviseCommand::class,
                 StubsCommand::class,
+                AutoReportCommand::class,
             ]);
         }
 
         $this->registerEloquentBridge();
         $this->registerOctaneResets();
+        $this->registerAutoMonitor();
+    }
+
+    private function registerAutoMonitor(): void
+    {
+        if ((string) $this->app['config']->get('orm-universal.auto.mode', 'monitor') === 'off') {
+            return;
+        }
+
+        if (! class_exists(QueryExecuted::class)) {
+            return;
+        }
+
+        $this->app['events']->listen(QueryExecuted::class, function ($event): void {
+            if ($this->app->bound(VanillaMonitor::class)) {
+                $this->app->make(VanillaMonitor::class)->record($event);
+            }
+        });
     }
 
     private function registerEloquentBridge(): void
@@ -115,6 +142,10 @@ final class OrmUniversalServiceProvider extends ServiceProvider
         $flush = function (): void {
             if ($this->app->bound(Ude::class)) {
                 $this->app->make(Ude::class)->flush();
+            }
+
+            if ($this->app->bound(VanillaMonitor::class)) {
+                $this->app->make(VanillaMonitor::class)->reset();
             }
         };
 

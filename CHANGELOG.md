@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `LaravelModelAdapter` construye las 11 familias de relaciones Eloquent (through, morphToMany/morphedByMany y morphTo con morph map explícito; polimórficas primero).
 - `LaravelPaginatorAdapter`: convierte paginadores UDE en `LengthAwarePaginator`/`Paginator` nativos de Laravel.
+- **Monitor automático (ON, riesgo cero)**: `VanillaMonitor` sobre `QueryExecuted` detecta N+1/queries duplicadas, lentas y sugiere eager-loading; comando `ude:auto:report` (console/JSON/Markdown) y limpieza en request/Octane.
 
 ## [0.1.1] - 2026-10-06
 

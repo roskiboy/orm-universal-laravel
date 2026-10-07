@@ -66,6 +66,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Automatic mode
+    |--------------------------------------------------------------------------
+    |
+    | monitor: zero-risk observability (N+1, duplicates, slow queries).
+    | off: disables the monitor entirely. The transparent intercept mode is
+    | enabled per connection with ude-* drivers (opt-in).
+    |
+    */
+    'auto' => [
+        'mode' => env('UDE_AUTO', 'monitor'),
+        'slow_ms' => (int) env('UDE_AUTO_SLOW_MS', 200),
+        'n_plus_one_threshold' => (int) env('UDE_AUTO_N1_THRESHOLD', 3),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Query result cache (opt-in)
     |--------------------------------------------------------------------------
     */
