@@ -6,6 +6,7 @@ namespace OrmUniversal\Laravel\Console;
 
 use OrmUniversal\Laravel\Analysis\Codemod;
 use OrmUniversal\Laravel\Analysis\ConfigDatabaseCodemod;
+use OrmUniversal\Laravel\Analysis\GitDirtyGuard;
 
 /**
  * Converts connection drivers in `config/database.php` to the `ude-*` drivers
@@ -84,7 +85,7 @@ final class AutoEnableCommand extends BaseCommand
             return self::SUCCESS;
         }
 
-        if (! (bool) $this->option('force') && $this->gitDirty($path)) {
+        if (! (bool) $this->option('force') && GitDirtyGuard::isDirty($path)) {
             $this->components->error('El archivo tiene cambios sin commitear. Crea una rama/commit o usa --force.');
 
             return self::FAILURE;
@@ -119,16 +120,5 @@ final class AutoEnableCommand extends BaseCommand
         $this->components->warn('Revisa el diff, reinicia workers/Octane y ejecuta la suite de paridad.');
 
         return self::SUCCESS;
-    }
-
-    private function gitDirty(string $path): bool
-    {
-        if (! function_exists('shell_exec')) {
-            return false;
-        }
-
-        $output = @shell_exec('git status --porcelain -- '.escapeshellarg($path).' 2>&1');
-
-        return is_string($output) && trim($output) !== '';
     }
 }

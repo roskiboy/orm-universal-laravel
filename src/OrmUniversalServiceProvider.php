@@ -39,6 +39,7 @@ use OrmUniversal\Laravel\Console\SchemaDiffCommand;
 use OrmUniversal\Laravel\Console\SchemaGenerateCommand;
 use OrmUniversal\Laravel\Console\SchemaInspectCommand;
 use OrmUniversal\Laravel\Console\StubsCommand;
+use OrmUniversal\Laravel\Console\TypesMapCommand;
 use OrmUniversal\Laravel\Facades\OrmUniversal;
 use OrmUniversal\Relational\Cache\QueryCache;
 
@@ -102,6 +103,7 @@ final class OrmUniversalServiceProvider extends ServiceProvider
                 StubsCommand::class,
                 AutoReportCommand::class,
                 AutoEnableCommand::class,
+                TypesMapCommand::class,
             ]);
         }
 

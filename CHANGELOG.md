@@ -29,6 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   N+1/consultas lentas del monitor automático.
 - `flushDeferred()` en el flush de Octane/queue: los `defer()` pendientes se resuelven por lote en
   el límite del request.
+- **`ude:types:map`**: compara columnas reales (`SchemaInspector`) con `$casts`
+  (`LaravelModelAdapter`) y sugiere/corrige con php-parser (`--dry-run`/`--diff`/`--write`/
+  `--backup`); los decimales castados como float se reportan como error. Solo escribe modelos con
+  propiedad `$casts` y nunca sin `--write`.
 
 ## [0.1.2] - 2026-10-07
 
