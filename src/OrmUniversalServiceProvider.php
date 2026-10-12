@@ -34,6 +34,7 @@ use OrmUniversal\Laravel\Console\MapCommand;
 use OrmUniversal\Laravel\Console\MigrateAnalyzeCommand;
 use OrmUniversal\Laravel\Console\MigrateCodemodCommand;
 use OrmUniversal\Laravel\Console\ModelInspectCommand;
+use OrmUniversal\Laravel\Console\ParityApiCommand;
 use OrmUniversal\Laravel\Console\ProjectAnalyzeCommand;
 use OrmUniversal\Laravel\Console\QueryInspectCommand;
 use OrmUniversal\Laravel\Console\SchemaDiffCommand;
@@ -100,6 +101,7 @@ final class OrmUniversalServiceProvider extends ServiceProvider
                 CacheClearCommand::class,
                 CompatibilityCommand::class,
                 DocsApiCommand::class,
+                ParityApiCommand::class,
                 IndexAdviseCommand::class,
                 IndexGenerateCommand::class,
                 StubsCommand::class,

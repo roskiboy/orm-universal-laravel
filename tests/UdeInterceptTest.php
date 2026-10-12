@@ -129,6 +129,13 @@ final class UdeInterceptTest extends TestCase
                 ->join('alt as a', 'a.probe_id', '=', 'p.id')
                 ->select('p.name', 'a.label')
                 ->orderBy('p.id')->orderBy('a.id')->get()->all(),
+            'multi condition join' => fn (Connection $c) => $c->table('probe')
+                ->join('alt', function ($join): void {
+                    $join->on('alt.probe_id', '=', 'probe.id')
+                        ->on('alt.id', '>=', 'probe.id');
+                })
+                ->select('probe.id', 'alt.label')
+                ->orderBy('probe.id')->orderBy('alt.id')->get()->all(),
             'group by having' => fn (Connection $c) => $c->table('probe')
                 ->select('name', 'active')
                 ->groupBy('name', 'active')

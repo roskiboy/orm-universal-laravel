@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-12
+
+### Added
+- **`ude:parity:api`** (optimize-9): auditoría por reflexión de la superficie pública de
+  Laravel 13 (`Query\Builder`, `Eloquent\Builder`, `Schema\Blueprint`) contra los destinos
+  UDE, con clasificación `paridad/alias/na/diferido/gap` y razones por regla. Escribe
+  `storage/ude/api-parity.{json,md}`.
+- `Analysis\ParityAnalyzer` (testable en aislamiento) con mapas curados de alias,
+  internos, N/A por arquitectura y diferidos con alternativa; contratos en
+  `ParityAnalyzerTest` y `tests/Feature/Ude/ParityApiCommandTest`.
+
 ## [0.1.5] - 2026-10-07
 
 ### Added

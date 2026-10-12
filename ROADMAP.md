@@ -1,9 +1,13 @@
 # Roadmap — orm-universal/laravel
 
-Documento vivo. Intención, no compromiso de fechas. Línea soportada: `0.1.x`.
+Documento vivo. Intención, no compromiso de fechas. Línea soportada: `0.2.x`.
 
-## Current (0.1.x)
+## Current (0.2.x)
 
+- **`ude:parity:api`** + `Analysis\ParityAnalyzer` (optimize-9): auditoría de paridad
+  Laravel 13 con clasificación paridad/alias/na/diferido/gap y reporte en `storage/ude`.
+  Resultado vigente: 0 gaps en `Query\Builder`/`Eloquent\Builder`/`Schema\Blueprint`.
+- Intercepto AST con joins multi-condición en el `ON` (paridad fila a fila).
 - Service provider con auto-discovery, config fusionada/publicable y alias de fachada.
 - Kernel `Ude` con registries, contextos, profiler, optimizer, plugins y DocumentStore.
 - `LaravelConnectionAdapter` reutilizando el PDO vivo y la versión real del servidor.

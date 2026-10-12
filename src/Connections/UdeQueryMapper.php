@@ -19,6 +19,7 @@ use OrmUniversal\Relational\Ast\Comparison;
 use OrmUniversal\Relational\Ast\Expression;
 use OrmUniversal\Relational\Ast\InList;
 use OrmUniversal\Relational\Ast\LogicalExpression;
+use OrmUniversal\Relational\Ast\PredicateGroup;
 use OrmUniversal\Relational\Ast\RawExpression;
 use OrmUniversal\Relational\Ast\SelectQuery;
 
@@ -244,39 +245,50 @@ final class UdeQueryMapper
             return true;
         }
 
-        if (count($wheres) !== 1) {
+        if (count($wheres) === 0) {
             return false;
         }
 
-        $where = $wheres[0];
-        if (($where['type'] ?? null) !== 'Column') {
-            return false;
+        $conditions = [];
+
+        foreach ($wheres as $where) {
+            if (($where['type'] ?? null) !== 'Column') {
+                return false;
+            }
+
+            if (strtolower((string) ($where['boolean'] ?? 'and')) !== 'and') {
+                return false;
+            }
+
+            $first = $where['first'] ?? null;
+            $second = $where['second'] ?? null;
+            $operator = strtolower((string) ($where['operator'] ?? '='));
+
+            if (! is_string($first) || ! is_string($second)) {
+                return false;
+            }
+
+            if (preg_match(self::COLUMN, $first) !== 1 || preg_match(self::COLUMN, $second) !== 1) {
+                return false;
+            }
+
+            if (! in_array($operator, self::COMPARISONS, true)) {
+                return false;
+            }
+
+            $conditions[] = [$first, $operator, $second];
         }
 
-        if (strtolower((string) ($where['boolean'] ?? 'and')) !== 'and') {
-            return false;
-        }
-
-        $first = $where['first'] ?? null;
-        $second = $where['second'] ?? null;
-        $operator = strtolower((string) ($where['operator'] ?? '='));
-
-        if (! is_string($first) || ! is_string($second)) {
-            return false;
-        }
-
-        if (preg_match(self::COLUMN, $first) !== 1 || preg_match(self::COLUMN, $second) !== 1) {
-            return false;
-        }
-
-        if (! in_array($operator, self::COMPARISONS, true)) {
-            return false;
-        }
+        $on = static function (PredicateGroup $group) use ($conditions): void {
+            foreach ($conditions as [$first, $operator, $second]) {
+                $group->whereColumn($first, $operator, $second);
+            }
+        };
 
         match ($type) {
-            'left' => $ast->leftJoin($table, $first, $operator, $second),
-            'right' => $ast->rightJoin($table, $first, $operator, $second),
-            default => $ast->join($table, $first, $operator, $second),
+            'left' => $ast->leftJoin($table, $on),
+            'right' => $ast->rightJoin($table, $on),
+            default => $ast->join($table, $on),
         };
 
         return true;
