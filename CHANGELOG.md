@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-13
+
+### Added
+- `UdeQueryMapper` intercepta `Fulltext` (MySQL/MariaDB/PostgreSQL) con las opciones
+  `mode`, `expanded`, `language` y `vector`.
+
+### Changed
+- Diferidos reducidos a 10: full-text, laterales y `updateFrom` ya no son diferidos;
+  permanecen `straightJoin*`, `timeout`, `insertOrIgnoreReturning` y vector.
+
 ## [0.3.0] - 2026-10-13
 
 ### Added

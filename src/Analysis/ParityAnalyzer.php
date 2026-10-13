@@ -229,15 +229,10 @@ final class ParityAnalyzer
      */
     private const DEFERRED = [
         'Illuminate\Database\Query\Builder' => [
-            'whereFullText' => 'Full-text requiere configuración por motor (índices fulltext, diccionarios tsquery); planificado; alternativa actual: `whereRaw()`.',
-            'orWhereFullText' => 'Full-text requiere configuración por motor; alternativa actual: `whereRaw()` con OR.',
-            'joinLateral' => 'LATERAL/CROSS APPLY por dialecto: planificado; alternativa actual: `joinSub()`.',
-            'leftJoinLateral' => 'LATERAL/OUTER APPLY por dialecto: planificado; alternativa actual: `leftJoinSub()`.',
             'straightJoin' => 'Hint exclusivo de MySQL; alternativa actual: `raw()` en la tabla.',
             'straightJoinSub' => 'Hint exclusivo de MySQL; alternativa actual: `joinSub()` + `raw()`.',
             'straightJoinWhere' => 'Hint exclusivo de MySQL; alternativa actual: `joinWhere()` + `raw()`.',
-            'timeout' => 'Timeout por consulta sin soporte uniforme en PDO; alternativa actual: `statement_timeout` del servidor y RetryPolicy.',
-            'updateFrom' => 'UPDATE ... FROM solo en PostgreSQL/SQL Server; requiere capability dedicada; alternativa actual: subconsulta en el SET.',
+            'timeout' => 'Laravel solo almacena el valor (no lo aplica por consulta en 13.35); alternativa actual: `statement_timeout` del servidor y RetryPolicy.',
             'insertOrIgnoreReturning' => 'Combinación INSERT IGNORE + RETURNING divergente por motor; alternativa actual: `insertOrIgnore()` + `returning()` en el AST.',
             'whereVectorSimilarTo' => 'Búsqueda vectorial: requiere MariaDB 11.7+/pgvector; el stack corre MariaDB 11.6. API reservada.',
             'whereVectorDistanceLessThan' => 'Búsqueda vectorial: requiere MariaDB 11.7+/pgvector; el stack corre MariaDB 11.6. API reservada.',

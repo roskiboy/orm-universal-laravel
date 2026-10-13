@@ -27,8 +27,9 @@ final class ParityAnalyzerTest extends TestCase
         self::assertContains('whereToday', $result['parity']);
         self::assertContains('insertOrIgnore', $result['parity']);
         self::assertContains('from', $result['parity']);
+        self::assertContains('whereFullText', $result['parity']);
         self::assertSame('lock', $result['alias']['lockForUpdate']);
-        self::assertArrayHasKey('whereFullText', $result['defer']);
+        self::assertArrayHasKey('straightJoin', $result['defer']);
         self::assertArrayHasKey('useWritePdo', $result['na']);
         self::assertSame(0, $result['counts'][ParityAnalyzer::GAP]);
         self::assertSame(

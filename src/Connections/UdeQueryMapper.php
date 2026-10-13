@@ -20,6 +20,7 @@ use OrmUniversal\Relational\Ast\Comparison;
 use OrmUniversal\Relational\Ast\DateExpression;
 use OrmUniversal\Relational\Ast\Exists;
 use OrmUniversal\Relational\Ast\Expression;
+use OrmUniversal\Relational\Ast\FullText;
 use OrmUniversal\Relational\Ast\InList;
 use OrmUniversal\Relational\Ast\JsonExpression;
 use OrmUniversal\Relational\Ast\JsonLengthExpression;
@@ -668,6 +669,29 @@ final class UdeQueryMapper
                 }
 
                 return new Exists($sub, $type === 'NotExists');
+
+            case 'Fulltext':
+                if (! in_array($this->driver, ['mysql', 'mariadb', 'pgsql'], true)) {
+                    return false;
+                }
+
+                $fullTextColumns = $where['columns'] ?? null;
+                $value = $where['value'] ?? null;
+
+                if (! is_array($fullTextColumns) || $fullTextColumns === [] || ! is_string($value)) {
+                    return false;
+                }
+
+                foreach ($fullTextColumns as $fullTextColumn) {
+                    if (! is_string($fullTextColumn) || preg_match(self::COLUMN, $fullTextColumn) !== 1) {
+                        return false;
+                    }
+                }
+
+                $options = is_array($where['options'] ?? null) ? $where['options'] : [];
+                $options = array_intersect_key($options, array_flip(['mode', 'expanded', 'language', 'vector']));
+
+                return new FullText(array_values($fullTextColumns), Expression::normalizeOperand($value), $options);
 
             case 'Nested':
                 $nested = $where['query'] ?? null;
