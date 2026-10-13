@@ -1,8 +1,8 @@
 # Roadmap — orm-universal/laravel
 
-Documento vivo. Intención, no compromiso de fechas. Línea soportada: `0.2.x`.
+Documento vivo. Intención, no compromiso de fechas. Línea soportada: `0.3.x`.
 
-## Current (0.2.x)
+## Current (0.3.x)
 
 - **`ude:parity:api`** + `Analysis\ParityAnalyzer` (optimize-9): auditoría de paridad
   Laravel 13 con clasificación paridad/alias/na/diferido/gap y reporte en `storage/ude`.

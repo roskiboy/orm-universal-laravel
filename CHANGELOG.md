@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-13
+
+### Added
+- `UdeQueryMapper` ampliado con paridad fila a fila: fechas (`Date/Time/Day/Month/Year`),
+  `Like` con sensibilidad (solo MySQL/MariaDB), JSON (`JsonContains`, `JsonContainsKey` con
+  paths `col->a->b`, `JsonLength`, `JsonOverlaps`), `InRaw`/`NotInRaw`, `RowValues`,
+  `betweenColumns`/`valueBetween`, `NullSafeEquals`, `Exists`/`NotExists` (habilita
+  `whereHas` por mapeo recursivo) y booleans `and not`/`or not` de `whereNot`.
+- Tests de paridad ampliados en `UdeInterceptTest`: shapes nuevos interceptados y
+  `dynamicWhere`/macros funcionando sobre conexiones `ude-*` (el builder interceptado
+  hereda de `Illuminate\Database\Query\Builder`).
+
 ## [0.2.0] - 2026-10-12
 
 ### Added

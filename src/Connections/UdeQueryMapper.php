@@ -10,17 +10,23 @@ use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder as IlluminateQueryBuilder;
 use Illuminate\Database\Query\JoinClause;
 use OrmUniversal\Contracts\Enums\AggregateFunction;
+use OrmUniversal\Contracts\Enums\ComparisonOperator;
 use OrmUniversal\Contracts\Enums\LogicalOperator;
 use OrmUniversal\Contracts\ValueObjects\TableIdentifier;
 use OrmUniversal\Relational\Ast\Aggregate;
 use OrmUniversal\Relational\Ast\Between;
 use OrmUniversal\Relational\Ast\Column;
 use OrmUniversal\Relational\Ast\Comparison;
+use OrmUniversal\Relational\Ast\DateExpression;
+use OrmUniversal\Relational\Ast\Exists;
 use OrmUniversal\Relational\Ast\Expression;
 use OrmUniversal\Relational\Ast\InList;
+use OrmUniversal\Relational\Ast\JsonExpression;
+use OrmUniversal\Relational\Ast\JsonLengthExpression;
 use OrmUniversal\Relational\Ast\LogicalExpression;
 use OrmUniversal\Relational\Ast\PredicateGroup;
 use OrmUniversal\Relational\Ast\RawExpression;
+use OrmUniversal\Relational\Ast\RowValues;
 use OrmUniversal\Relational\Ast\SelectQuery;
 
 /**
@@ -48,11 +54,16 @@ final class UdeQueryMapper
     /** @var list<string> */
     private const OPERATORS = ['=', '!=', '<>', '>', '>=', '<', '<=', 'like', 'not like'];
 
+    private ?string $driver = null;
+
     public function map(IlluminateQueryBuilder $builder): ?SelectQuery
     {
         if (! $builder->connection instanceof Connection) {
             return null;
         }
+
+        $driver = $builder->connection->getDriverName();
+        $this->driver = str_starts_with($driver, 'ude-') ? substr($driver, 4) : $driver;
 
         if ((string) $builder->connection->getTablePrefix() !== '') {
             return null;
@@ -311,7 +322,13 @@ final class UdeQueryMapper
                 continue;
             }
 
-            $operator = strtolower((string) ($where['boolean'] ?? 'and')) === 'or'
+            $boolean = strtolower((string) ($where['boolean'] ?? 'and'));
+
+            if (str_contains($boolean, 'not')) {
+                $expression = new LogicalExpression(LogicalOperator::Not, [$expression]);
+            }
+
+            $operator = str_starts_with($boolean, 'or')
                 ? LogicalOperator::Or
                 : LogicalOperator::And;
 
@@ -429,6 +446,229 @@ final class UdeQueryMapper
 
                 return Comparison::of(Column::make($first), $operator, Column::make($second));
 
+            case 'Date':
+            case 'Time':
+            case 'Day':
+            case 'Month':
+            case 'Year':
+                if (! is_string($column) || preg_match(self::COLUMN, $column) !== 1) {
+                    return false;
+                }
+
+                $operator = strtolower((string) ($where['operator'] ?? '='));
+                if (! in_array($operator, self::COMPARISONS, true)) {
+                    return false;
+                }
+
+                $value = $where['value'] ?? null;
+                if (! $this->isBindable($value)) {
+                    return false;
+                }
+
+                return Comparison::of(
+                    new DateExpression(strtolower($type), Column::make($column)),
+                    $operator,
+                    Expression::normalizeOperand($value),
+                );
+
+            case 'Like':
+                if (! is_string($column) || preg_match(self::COLUMN, $column) !== 1) {
+                    return false;
+                }
+
+                $value = $where['value'] ?? null;
+                if (! is_string($value)) {
+                    return false;
+                }
+
+                $caseSensitive = (bool) ($where['caseSensitive'] ?? false);
+                $not = (bool) ($where['not'] ?? false);
+
+                if ($caseSensitive && ! in_array($this->driver, ['mysql', 'mariadb'], true)) {
+                    return false;
+                }
+
+                $operator = $caseSensitive
+                    ? ($not ? ComparisonOperator::NotLikeBinary : ComparisonOperator::LikeBinary)
+                    : ($not ? ComparisonOperator::NotLike : ComparisonOperator::Like);
+
+                return new Comparison(Column::make($column), $operator, Expression::normalizeOperand($value));
+
+            case 'JsonContains':
+                $json = $this->jsonExpression($column);
+                if ($json === null) {
+                    return false;
+                }
+
+                $value = $where['value'] ?? null;
+                if ($value instanceof LaravelExpression || (is_object($value) && ! $value instanceof DateTimeInterface)) {
+                    return false;
+                }
+
+                $comparison = $json->contains($value);
+
+                return (bool) ($where['not'] ?? false)
+                    ? new LogicalExpression(LogicalOperator::Not, [$comparison])
+                    : $comparison;
+
+            case 'JsonContainsKey':
+                $key = $this->jsonKeyExpression($column);
+
+                return $key ?? false;
+
+            case 'JsonLength':
+                $json = $this->jsonExpression($column);
+                if ($json === null) {
+                    return false;
+                }
+
+                $operator = strtolower((string) ($where['operator'] ?? '='));
+                $value = $where['value'] ?? null;
+
+                if (! in_array($operator, self::COMPARISONS, true) || ! is_numeric($value)) {
+                    return false;
+                }
+
+                return Comparison::of(new JsonLengthExpression($json), $operator, Expression::normalizeOperand((int) $value));
+
+            case 'JsonOverlaps':
+                if (! in_array($this->driver, ['mysql', 'mariadb'], true)) {
+                    return false;
+                }
+
+                $json = $this->jsonExpression($column);
+                $value = $where['value'] ?? null;
+
+                if ($json === null || $value instanceof LaravelExpression || (is_object($value) && ! $value instanceof DateTimeInterface)) {
+                    return false;
+                }
+
+                $comparison = $json->overlaps($value);
+
+                return (bool) ($where['not'] ?? false)
+                    ? new LogicalExpression(LogicalOperator::Not, [$comparison])
+                    : $comparison;
+
+            case 'InRaw':
+            case 'NotInRaw':
+                if (! is_string($column) || preg_match(self::COLUMN, $column) !== 1) {
+                    return false;
+                }
+
+                $values = $where['values'] ?? null;
+                if (! is_array($values) || $values === []) {
+                    return false;
+                }
+
+                $integers = [];
+                foreach ($values as $value) {
+                    if (! is_int($value) && ! (is_string($value) && ctype_digit($value))) {
+                        return false;
+                    }
+                    $integers[] = (int) $value;
+                }
+
+                return new InList(Column::make($column), $integers, $type === 'NotInRaw');
+
+            case 'RowValues':
+                if (! in_array($this->driver, ['mysql', 'mariadb', 'pgsql', 'sqlite'], true)) {
+                    return false;
+                }
+
+                $columns = $where['columns'] ?? null;
+                $values = $where['values'] ?? null;
+                $operator = strtolower((string) ($where['operator'] ?? '='));
+                $mappedOperator = match ($operator) {
+                    '=', '==', 'eq' => ComparisonOperator::Eq,
+                    '!=', '<>', 'neq' => ComparisonOperator::Neq,
+                    '>', 'gt' => ComparisonOperator::Gt,
+                    '>=', 'gte' => ComparisonOperator::Gte,
+                    '<', 'lt' => ComparisonOperator::Lt,
+                    '<=', 'lte' => ComparisonOperator::Lte,
+                    default => null,
+                };
+
+                if (! is_array($columns) || ! is_array($values) || count($columns) !== count($values) || $mappedOperator === null) {
+                    return false;
+                }
+
+                $mappedColumns = [];
+                foreach ($columns as $columnName) {
+                    if (! is_string($columnName) || preg_match(self::COLUMN, $columnName) !== 1) {
+                        return false;
+                    }
+                    $mappedColumns[] = Column::make($columnName);
+                }
+
+                $mappedValues = [];
+                foreach ($values as $value) {
+                    if (! $this->isBindable($value)) {
+                        return false;
+                    }
+                    $mappedValues[] = Expression::normalizeOperand($value);
+                }
+
+                return new RowValues($mappedColumns, $mappedOperator, $mappedValues);
+
+            case 'betweenColumns':
+            case 'valueBetween':
+                $not = (bool) ($where['not'] ?? false);
+                $pair = $type === 'betweenColumns' ? ($where['values'] ?? null) : ($where['columns'] ?? null);
+
+                if (! is_array($pair)) {
+                    return false;
+                }
+
+                $pair = array_values($pair);
+                if (count($pair) !== 2 || ! is_string($pair[0]) || ! is_string($pair[1])) {
+                    return false;
+                }
+
+                if (preg_match(self::COLUMN, $pair[0]) !== 1 || preg_match(self::COLUMN, $pair[1]) !== 1) {
+                    return false;
+                }
+
+                if ($type === 'valueBetween') {
+                    $value = $where['value'] ?? null;
+                    if (! $this->isBindable($value)) {
+                        return false;
+                    }
+
+                    return new Between(Expression::normalizeOperand($value), Column::make($pair[0]), Column::make($pair[1]), $not);
+                }
+
+                if (! is_string($column) || preg_match(self::COLUMN, $column) !== 1) {
+                    return false;
+                }
+
+                return new Between(Column::make($column), Column::make($pair[0]), Column::make($pair[1]), $not);
+
+            case 'NullSafeEquals':
+                if (! is_string($column) || preg_match(self::COLUMN, $column) !== 1) {
+                    return false;
+                }
+
+                $value = $where['value'] ?? null;
+                if ($value instanceof LaravelExpression || (is_object($value) && ! $value instanceof DateTimeInterface)) {
+                    return false;
+                }
+
+                return Comparison::of(Column::make($column), 'is not distinct from', Expression::normalizeOperand($value));
+
+            case 'Exists':
+            case 'NotExists':
+                $nested = $where['query'] ?? null;
+                if (! $nested instanceof IlluminateQueryBuilder) {
+                    return false;
+                }
+
+                $sub = $this->map($nested);
+                if ($sub === null) {
+                    return false;
+                }
+
+                return new Exists($sub, $type === 'NotExists');
+
             case 'Nested':
                 $nested = $where['query'] ?? null;
                 if (! $nested instanceof IlluminateQueryBuilder) {
@@ -483,7 +723,13 @@ final class UdeQueryMapper
                 continue;
             }
 
-            $operator = strtolower((string) ($having['boolean'] ?? 'and')) === 'or'
+            $boolean = strtolower((string) ($having['boolean'] ?? 'and'));
+
+            if (str_contains($boolean, 'not')) {
+                $expression = new LogicalExpression(LogicalOperator::Not, [$expression]);
+            }
+
+            $operator = str_starts_with($boolean, 'or')
                 ? LogicalOperator::Or
                 : LogicalOperator::And;
 
@@ -590,5 +836,54 @@ final class UdeQueryMapper
         }
 
         return ! is_resource($value);
+    }
+
+    private function jsonExpression(mixed $column): ?JsonExpression
+    {
+        if (! is_string($column)) {
+            return null;
+        }
+
+        $parts = explode('->', $column);
+        $base = trim((string) array_shift($parts));
+
+        if (preg_match(self::COLUMN, $base) !== 1) {
+            return null;
+        }
+
+        foreach ($parts as $segment) {
+            if (preg_match('/^[A-Za-z0-9_\-]+$/', trim($segment)) !== 1) {
+                return null;
+            }
+        }
+
+        $path = $parts === [] ? '$' : '$'.'.'.implode('.', array_map('trim', $parts));
+
+        return Expression::json(Column::make($base), $path);
+    }
+
+    private function jsonKeyExpression(mixed $column): ?Expression
+    {
+        if (! is_string($column) || ! str_contains($column, '->')) {
+            return null;
+        }
+
+        $parts = explode('->', $column);
+        $base = trim((string) array_shift($parts));
+        $key = trim((string) array_pop($parts));
+
+        if (preg_match(self::COLUMN, $base) !== 1 || preg_match('/^[A-Za-z0-9_\-]+$/', $key) !== 1) {
+            return null;
+        }
+
+        foreach ($parts as $segment) {
+            if (preg_match('/^[A-Za-z0-9_\-]+$/', trim($segment)) !== 1) {
+                return null;
+            }
+        }
+
+        $parent = $parts === [] ? '$' : '$'.'.'.implode('.', array_map('trim', $parts));
+
+        return Expression::json(Column::make($base), $parent)->containsKey($key);
     }
 }

@@ -10,9 +10,12 @@ use Illuminate\Database\Connection;
 use Illuminate\Database\Connectors\ConnectionFactory;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Builder as IlluminateQueryBuilder;
 use Illuminate\Events\Dispatcher;
 use OrmUniversal\Laravel\Connections\UdeConnectionFactory;
 use OrmUniversal\Laravel\Connections\UdeIntercept;
+use OrmUniversal\Laravel\Connections\UdeQueryBuilder;
+use OrmUniversal\Laravel\Connections\UdeQueryMapper;
 use OrmUniversal\Relational\Ast\SelectQuery;
 use PHPUnit\Framework\TestCase;
 
@@ -62,17 +65,22 @@ final class UdeInterceptTest extends TestCase
     private function seed(Connection $connection): void
     {
         $connection->statement(
-            'create table probe (id integer primary key, name text not null, qty integer null, price numeric not null, active integer not null, deleted_at text null)'
+            'create table probe (id integer primary key, name text not null, qty integer null, price numeric not null, active integer not null, deleted_at text null, created_at text null, meta text null, low integer null, high integer null)'
         );
 
         $connection->insert(
-            'insert into probe (id, name, qty, price, active, deleted_at) values (1, ?, ?, ?, ?, ?), (2, ?, ?, ?, ?, ?), (3, ?, ?, ?, ?, ?), (4, ?, ?, ?, ?, ?), (5, ?, ?, ?, ?, ?)',
+            'insert into probe (id, name, qty, price, active, deleted_at, created_at, meta, low, high) values '
+            .'(1, ?, ?, ?, ?, ?, ?, ?, ?, ?), '
+            .'(2, ?, ?, ?, ?, ?, ?, ?, ?, ?), '
+            .'(3, ?, ?, ?, ?, ?, ?, ?, ?, ?), '
+            .'(4, ?, ?, ?, ?, ?, ?, ?, ?, ?), '
+            .'(5, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
-                'ana', 3, '10.50', 1, null,
-                'bob', 0, '3.25', 0, '2026-01-01 00:00:00',
-                'carla', 7, '99.99', 1, null,
-                'ana', 5, '0.10', 0, null,
-                'dave', null, '42.00', 1, null,
+                'ana', 3, '10.50', 1, null, '2026-01-05 10:00:00', '["a","b"]', 2, 10,
+                'bob', 0, '3.25', 0, '2026-01-01 00:00:00', '2026-02-01 08:00:00', '{"k":1}', 1, 5,
+                'carla', 7, '99.99', 1, null, '2026-03-10 22:00:00', '["c"]', 5, 9,
+                'ana', 5, '0.10', 0, null, '2026-01-05 23:59:59', null, 0, 4,
+                'dave', null, '42.00', 1, null, null, '[]', 3, 3,
             ]
         );
 
@@ -81,6 +89,56 @@ final class UdeInterceptTest extends TestCase
             'insert into alt (id, probe_id, label) values (1, 1, ?), (2, 3, ?), (3, 3, ?)',
             ['x', 'y', 'z']
         );
+    }
+
+    public function test_new_where_shapes_are_intercepted_by_the_mapper(): void
+    {
+        $mapper = new UdeQueryMapper;
+        $connection = $this->db->connection('ude');
+
+        $shapes = [
+            'date' => fn () => $connection->table('probe')->whereDate('created_at', '=', '2026-01-05'),
+            'not' => fn () => $connection->table('probe')->whereNot('qty', '>', 3),
+            'in raw' => fn () => $connection->table('probe')->whereIntegerInRaw('id', [1, 3]),
+            'json length' => fn () => $connection->table('probe')->whereJsonLength('meta', '>', 1),
+            'json key' => fn () => $connection->table('probe')->whereJsonContainsKey('meta->k'),
+            'row values' => fn () => $connection->table('probe')->whereRowValues(['id', 'qty'], '>=', [3, 5]),
+            'between columns' => fn () => $connection->table('probe')->whereBetweenColumns('qty', ['low', 'high']),
+            'value between' => fn () => $connection->table('probe')->whereValueBetween(4, ['low', 'high']),
+            'null safe' => fn () => $connection->table('probe')->whereNullSafeEquals('deleted_at', null),
+            'exists' => fn () => $connection->table('probe')->whereExists(fn ($query) => $query->select('probe_id')->from('alt')->where('label', 'x')),
+        ];
+
+        foreach ($shapes as $name => $shape) {
+            self::assertInstanceOf(SelectQuery::class, $mapper->map($shape()), "shape [{$name}] must be intercepted");
+        }
+    }
+
+    public function test_macros_and_dynamic_where_work_on_ude_connections(): void
+    {
+        IlluminateQueryBuilder::macro('onlyAna', fn () => $this->where('name', 'ana'));
+        UdeQueryBuilder::macro('onlyAna', fn () => $this->where('name', 'ana'));
+
+        try {
+            $ude = $this->db->connection('ude')->table('probe')->onlyAna()->orderBy('id')->get()->all();
+            $vanilla = $this->db->connection('vanilla')->table('probe')->onlyAna()->orderBy('id')->get()->all();
+
+            self::assertSame(
+                json_encode($vanilla, JSON_THROW_ON_ERROR),
+                json_encode($ude, JSON_THROW_ON_ERROR),
+            );
+
+            $udeDynamic = $this->db->connection('ude')->table('probe')->whereName('ana')->orderBy('id')->get()->all();
+            $vanillaDynamic = $this->db->connection('vanilla')->table('probe')->whereName('ana')->orderBy('id')->get()->all();
+
+            self::assertSame(
+                json_encode($vanillaDynamic, JSON_THROW_ON_ERROR),
+                json_encode($udeDynamic, JSON_THROW_ON_ERROR),
+            );
+        } finally {
+            IlluminateQueryBuilder::flushMacros();
+            UdeQueryBuilder::flushMacros();
+        }
     }
 
     public function test_whitelisted_reads_match_vanilla_row_by_row(): void
@@ -114,6 +172,25 @@ final class UdeInterceptTest extends TestCase
             'where not null' => fn (Connection $c) => $c->table('probe')->whereNotNull('deleted_at')->orderBy('id')->get()->all(),
             'between' => fn (Connection $c) => $c->table('probe')->whereBetween('qty', [3, 5])->orderBy('id')->get()->all(),
             'where column' => fn (Connection $c) => $c->table('probe')->whereColumn('id', '<', 'qty')->orderBy('id')->get()->all(),
+            'where not' => fn (Connection $c) => $c->table('probe')->whereNot('qty', '>', 3)->orderBy('id')->get()->all(),
+            'or where not' => fn (Connection $c) => $c->table('probe')->where('id', 1)->orWhereNot('qty', '>', 3)->orderBy('id')->get()->all(),
+            'where date' => fn (Connection $c) => $c->table('probe')->whereDate('created_at', '=', '2026-01-05')->orderBy('id')->get()->all(),
+            'where time' => fn (Connection $c) => $c->table('probe')->whereTime('created_at', '<', '12:00:00')->orderBy('id')->get()->all(),
+            'where year' => fn (Connection $c) => $c->table('probe')->whereYear('created_at', 2026)->orderBy('id')->get()->all(),
+            'where integer in raw' => fn (Connection $c) => $c->table('probe')->whereIntegerInRaw('id', [1, 3])->orderBy('id')->get()->all(),
+            'where integer not in raw' => fn (Connection $c) => $c->table('probe')->whereIntegerNotInRaw('id', [1, 2])->orderBy('id')->get()->all(),
+            'where json length' => fn (Connection $c) => $c->table('probe')->whereJsonLength('meta', '>', 1)->orderBy('id')->get()->all(),
+            'where json contains key' => fn (Connection $c) => $c->table('probe')->whereJsonContainsKey('meta->k')->orderBy('id')->get()->all(),
+            'where row values' => fn (Connection $c) => $c->table('probe')->whereRowValues(['id', 'qty'], '>=', [3, 5])->orderBy('id')->get()->all(),
+            'where between columns' => fn (Connection $c) => $c->table('probe')->whereBetweenColumns('qty', ['low', 'high'])->orderBy('id')->get()->all(),
+            'where value between' => fn (Connection $c) => $c->table('probe')->whereValueBetween(4, ['low', 'high'])->orderBy('id')->get()->all(),
+            'where null safe equals' => fn (Connection $c) => $c->table('probe')->whereNullSafeEquals('deleted_at', null)->orderBy('id')->get()->all(),
+            'where exists' => fn (Connection $c) => $c->table('probe')->whereExists(function ($q): void {
+                $q->select('probe_id')->from('alt')->where('label', 'x');
+            })->orderBy('id')->get()->all(),
+            'where not exists' => fn (Connection $c) => $c->table('probe')->whereNotExists(function ($q): void {
+                $q->select('probe_id')->from('alt')->where('label', 'x');
+            })->orderBy('id')->get()->all(),
             'nested where' => fn (Connection $c) => $c->table('probe')->where(function ($q): void {
                 $q->where('name', 'ana')->orWhere('name', 'carla');
             })->where('active', 1)->orderBy('id')->get()->all(),
