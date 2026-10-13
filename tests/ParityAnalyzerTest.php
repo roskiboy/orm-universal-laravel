@@ -28,8 +28,11 @@ final class ParityAnalyzerTest extends TestCase
         self::assertContains('insertOrIgnore', $result['parity']);
         self::assertContains('from', $result['parity']);
         self::assertContains('whereFullText', $result['parity']);
+        self::assertContains('straightJoin', $result['parity']);
+        self::assertContains('timeout', $result['parity']);
+        self::assertContains('whereVectorDistanceLessThan', $result['parity']);
         self::assertSame('lock', $result['alias']['lockForUpdate']);
-        self::assertArrayHasKey('straightJoin', $result['defer']);
+        self::assertSame([], $result['defer']);
         self::assertArrayHasKey('useWritePdo', $result['na']);
         self::assertSame(0, $result['counts'][ParityAnalyzer::GAP]);
         self::assertSame(

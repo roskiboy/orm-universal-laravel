@@ -1,11 +1,11 @@
 # Eloquent — orm-universal/laravel
 
-La integración es aditiva: **Eloquent no se modifica ni se envuelve**. El motor universal
-convive con él en modo híbrido.
+The integration is additive: **Eloquent is neither modified nor wrapped**. The universal
+engine coexists with it in hybrid mode.
 
-## Macros globales
+## Global macros
 
-El provider registra dos macros en `Illuminate\Database\Eloquent\Builder`:
+The provider registers two macros on `Illuminate\Database\Eloquent\Builder`:
 
 ```php
 Builder::macro('universal', function () {
@@ -18,26 +18,26 @@ Builder::macro('recordset', function () {
 });
 ```
 
-Uso:
+Usage:
 
 ```php
 Seller::query()->universal()->where('is_active', true)->get();
-Seller::query()->recordset();   // RecordsetInterface de toda la tabla
+Seller::query()->recordset();   // RecordsetInterface of the whole table
 ```
 
-Los macros no inyectan filtros ni alteran la consulta Eloquent original.
+The macros do not inject filters or alter the original Eloquent query.
 
-## Trait `HasUniversalQueries`
+## `HasUniversalQueries` trait
 
-Trait opcional (`OrmUniversal\Laravel\Concerns\HasUniversalQueries`) para exponer el
-builder universal desde el modelo:
+Optional trait (`OrmUniversal\Laravel\Concerns\HasUniversalQueries`) to expose the
+universal builder from the model:
 
-| Método | Descripción |
+| Method | Description |
 |---|---|
-| `universal(): QueryBuilder` | Builder UDE sobre tabla/conexión del modelo |
-| `universalTable(): string` | Resuelve `getTable()` sin tocar la instancia real |
-| `universalConnection(): string` | `getConnectionName()` o `database.default` |
-| `universalRecordset(): RecordsetInterface` | Recordset de toda la tabla |
+| `universal(): QueryBuilder` | UDE builder over the model's table/connection |
+| `universalTable(): string` | Resolves `getTable()` without touching the real instance |
+| `universalConnection(): string` | `getConnectionName()` or `database.default` |
+| `universalRecordset(): RecordsetInterface` | Recordset of the whole table |
 
 ```php
 use OrmUniversal\Laravel\Concerns\HasUniversalQueries;
@@ -53,39 +53,39 @@ Seller::universal()->where('is_active', true)->recordset();
 
 ## `LaravelBuilderAdapter`
 
-Puente unidireccional desde un `Eloquent\Builder` hacia un `QueryBuilder` de UDE
+One-way bridge from an `Eloquent\Builder` to a UDE `QueryBuilder`
 (`src/Adapters/LaravelBuilderAdapter.php`):
 
 - `fromEloquent(Builder $builder, QueryExecutor $executor): QueryBuilder`
 - `recordset(Builder $builder, QueryExecutor $executor): RecordsetInterface`
 
-Copia **solo** las cláusulas que entiende:
+Copies **only** the clauses it understands:
 
-| Cláusula Eloquent | Traducción UDE |
+| Eloquent clause | UDE translation |
 |---|---|
-| Basic | `where` / `orWhere` con operador |
+| Basic | `where` / `orWhere` with operator |
 | Null / NotNull | `whereNull` / `whereNotNull` |
-| In (y not) | `whereIn` / `whereNotIn` |
+| In (and not) | `whereIn` / `whereNotIn` |
 | Between | `whereBetween` |
 | Column | `whereColumn` |
 | orders | `orderBy` |
 | limit / offset | `limit` / `offset` |
 
-Las cláusulas desconocidas se **omiten, nunca se adivinan**, y la documentación del
-adaptador advierte: úsalo solo si las cláusulas copiadas cubren la consulta completa.
+Unknown clauses are **omitted, never guessed**, and the adapter documentation warns: use
+it only if the copied clauses cover the entire query.
 
-## Garantías del modo híbrido
+## Hybrid-mode guarantees
 
-`LaravelCompatibilityLayer::report()` declara los invariantes:
+`LaravelCompatibilityLayer::report()` declares the invariants:
 
-- Resultados de Eloquent sin cambios.
-- Ordenación, semántica de `null`, transacciones, casting y eventos sin cambios.
+- Eloquent results unchanged.
+- Ordering, `null` semantics, transactions, casting, and events unchanged.
 
-No hay interceptores globales: si no llamas a `universal()`, `recordset()` ni a la
-fachada, el comportamiento es el de Laravel puro.
+There are no global interceptors: if you do not call `universal()`, `recordset()`, or the
+facade, the behavior is that of pure Laravel.
 
-## Cuándo usar cada uno
+## When to use each one
 
-- Eloquent vanilla: modelos, eventos, relaciones, casting y todo el ecosistema Laravel.
-- UDE: consultas de lectura intensiva, recordsets/cursor, análisis de schema y
-  portabilidad entre motores.
+- Vanilla Eloquent: models, events, relations, casting, and the entire Laravel ecosystem.
+- UDE: read-intensive queries, recordsets/cursor, schema analysis, and
+  portability across engines.

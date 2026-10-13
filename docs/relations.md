@@ -1,7 +1,7 @@
-# Relaciones — orm-universal/laravel
+# Relations — orm-universal/laravel
 
-`LaravelModelAdapter` lee metadatos y relaciones de un modelo Eloquent **sin modificarlo**
-y las convierte en `RelationDefinition` de primera clase.
+`LaravelModelAdapter` reads metadata and relations from an Eloquent model **without
+modifying it** and converts them into first-class `RelationDefinition`s.
 
 ## `LaravelModelAdapter`
 
@@ -9,10 +9,10 @@ y las convierte en `RelationDefinition` de primera clase.
 
 ### `metadata(string $modelClass): array`
 
-Devuelve, sin instanciar el constructor del modelo:
+Returns, without instantiating the model constructor:
 
 `class`, `table`, `connection`, `primary_key`, `incrementing`, `timestamps`,
-`soft_deletes` (existencia de `trashed()`), `casts`, `fillable`, `guarded`, `hidden`,
+`soft_deletes` (existence of `trashed()`), `casts`, `fillable`, `guarded`, `hidden`,
 `appends`.
 
 ```php
@@ -22,41 +22,41 @@ $meta = $adapter->metadata(App\Models\Seller::class);
 
 ### `relationDefinitions(string $modelClass): list<RelationDefinition>`
 
-- Recorre los métodos públicos sin parámetros requeridos (excluye estáticos y `__*`).
-- Invoca cada método dentro de `try/catch`; si no devuelve una `Relation`, lo ignora.
-- Mapea las relaciones soportadas; `MorphTo` queda fuera a propósito porque el modelo
-  relacionado depende de la fila y no se adivina.
+- Walks public methods without required parameters (excludes static and `__*` ones).
+- Invokes each method inside `try/catch`; if it does not return a `Relation`, it is ignored.
+- Maps the supported relations; `MorphTo` is intentionally left out because the related
+  model depends on the row and is not guessed.
 
 ### `universal(string $modelClass, QueryExecutor $executor): QueryBuilder`
 
-Builder UDE para la tabla del modelo.
+UDE builder for the model's table.
 
-## Relaciones mapeadas
+## Mapped relations
 
-| Relación Eloquent | `RelationDefinition` | Datos |
+| Eloquent relation | `RelationDefinition` | Data |
 |---|---|---|
 | `BelongsTo` | `belongsTo()` | FK, owner key |
 | `HasOne` | `hasOne()` | FK, local key |
 | `HasMany` | `hasMany()` | FK, local key |
-| `BelongsToMany` | `belongsToMany()` | tabla pivote, claves pivote |
+| `BelongsToMany` | `belongsToMany()` | pivot table, pivot keys |
 | `MorphOne` | `morphOne()` | FK, morph type, local key |
 | `MorphMany` | `morphMany()` | FK, morph type, local key |
 
-Cada definición se enriquece con `withMetadata(['model' => ...])` indicando el modelo
-relacionado.
+Each definition is enriched with `withMetadata(['model' => ...])` indicating the related
+model.
 
 ## `RelationDefinition`
 
 `OrmUniversal\Relational\Relation\RelationDefinition` (`packages/relational`).
 
-Tipos disponibles como constantes: `HAS_ONE`, `HAS_MANY`, `BELONGS_TO`, `BELONGS_TO_MANY`,
+Types available as constants: `HAS_ONE`, `HAS_MANY`, `BELONGS_TO`, `BELONGS_TO_MANY`,
 `HAS_ONE_THROUGH`, `HAS_MANY_THROUGH`, `MORPH_ONE`, `MORPH_MANY`, `MORPH_TO`,
 `MORPH_TO_MANY`, `MORPHED_BY_MANY`, `CUSTOM`.
 
-Fábricas: `hasOne()`, `hasMany()`, `belongsTo()`, `belongsToMany()`, `morphOne()`,
+Factories: `hasOne()`, `hasMany()`, `belongsTo()`, `belongsToMany()`, `morphOne()`,
 `morphMany()`, `custom()`, `fromMetadata()`.
 
-Accesores: `name()`, `type()`, `relatedTable()`, `foreignKey()`, `localKey()`,
+Accessors: `name()`, `type()`, `relatedTable()`, `foreignKey()`, `localKey()`,
 `isToMany()`, `pivotTable()`, `pivotColumns()`, `morphType()`, `usesPivot()`,
 `metadata()`, `toArray()`, `toMetadata()`.
 
@@ -70,18 +70,18 @@ foreach ($adapter->relationDefinitions(App\Models\Seller::class) as $relation) {
 }
 ```
 
-## Limitaciones honestas
+## Honest limitations
 
-- Las relaciones se descubren por convención de Eloquent (métodos que devuelven
-  `Relation`); las definiciones dinámicas construidas en runtime no se detectan.
-- `MorphTo` solo se traduce con morph map explícito; sin él no se adivina.
-- El adaptador no ejecuta `load()` ni altera el modelo: solo describe.
+- Relations are discovered by Eloquent convention (methods returning a `Relation`);
+  dynamic definitions built at runtime are not detected.
+- `MorphTo` is only translated with an explicit morph map; without it, it is not guessed.
+- The adapter does not run `load()` or alter the model: it only describes.
 
-## Agregados de relación y paridad
+## Relation aggregates and parity
 
-`LaravelModelAdapter::relationDefinitions()` construye las 11 familias (hasOne/hasMany,
-belongsTo, belongsToMany, through, morph*, morphedByMany). Con un `RelationRegistry`
-puedes usar agregados UDE equivalentes a Eloquent:
+`LaravelModelAdapter::relationDefinitions()` builds the 11 families (hasOne/hasMany,
+belongsTo, belongsToMany, through, morph*, morphedByMany). With a `RelationRegistry` you
+can use UDE aggregates equivalent to Eloquent:
 
 ```php
 use OrmUniversal\Relational\Relation\RelationRegistry;
@@ -99,7 +99,7 @@ $rows = OrmUniversal::table('sellers')
     ->get();
 ```
 
-Paridad verificada fila a fila contra `withCount`/`withSum` de Eloquent en SQLite
-(`tests/Feature/Ude/RelationParityTest.php`), incluidos paginadores nativos
-(`LaravelPaginatorAdapter`) y las 11 familias en la suite del Core
+Parity verified row by row against Eloquent's `withCount`/`withSum` on SQLite
+(`tests/Feature/Ude/RelationParityTest.php`), including native paginators
+(`LaravelPaginatorAdapter`) and the 11 families in the Core suite
 (`RelationFamilyTest`, `RelationAggregateTest`).

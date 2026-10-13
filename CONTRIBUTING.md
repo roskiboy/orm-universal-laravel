@@ -1,19 +1,19 @@
 # Contributing — orm-universal/laravel
 
-Gracias por contribuir a la capa de integración. La regla central: **no romper Eloquent
-vanilla**.
+Thanks for contributing to the integration layer. The central rule: **do not break
+vanilla Eloquent**.
 
-## Requisitos
+## Requirements
 
 - PHP `^8.3`
 - Composer 2.x
-- Laravel 12.x/13.x para tests de integración
+- Laravel 12.x/13.x for integration tests
 
-## Flujo de ramas
+## Branch flow
 
-- `main`: siempre verde y publicable.
-- `feat/<descripcion>`, `fix/<descripcion>`, `docs/<descripcion>`, `chore/<descripcion>`.
-- Un PR por propósito; rebase sobre `main` antes de abrir.
+- `main`: always green and publishable.
+- `feat/<description>`, `fix/<description>`, `docs/<description>`, `chore/<description>`.
+- One PR per purpose; rebase onto `main` before opening it.
 
 ## Conventional Commits
 
@@ -24,16 +24,16 @@ perf(connections): cache executors per Laravel connection
 docs(hybrid): document Octane flush guarantees
 ```
 
-Cambio incompatible:
+Breaking change:
 
 ```text
 feat(adapters)!: drop legacy clause copying without explicit opt-in
 
-BREAKING CHANGE: LaravelBuilderAdapter ya no copia cláusulas fuera de la lista
-documentada. Revisa docs/eloquent.md antes de actualizar.
+BREAKING CHANGE: LaravelBuilderAdapter no longer copies clauses outside the documented
+list. Review docs/eloquent.md before upgrading.
 ```
 
-## Gates obligatorios
+## Mandatory gates
 
 ```bash
 composer install
@@ -42,24 +42,24 @@ vendor/bin/phpstan analyse
 vendor/bin/pint
 ```
 
-Los cuatro deben pasar. El CI prueba PHP 8.3–8.5 y clona las dependencias del monorepo
-como path repositories.
+All four must pass. CI tests PHP 8.3–8.5 and clones the monorepo dependencies as path
+repositories.
 
-## Reglas del paquete
+## Package rules
 
-- `declare(strict_types=1)` en todos los archivos.
-- No modifiques comportamiento de Eloquent: los macros son aditivos.
-- No adivines cláusulas: `LaravelBuilderAdapter` omite lo desconocido.
-- Detección de features por reflexión, nunca por número de versión.
-- Los comandos son conservadores: dry-run por defecto, `--write`/`--force` explícitos.
-- El estado por request se reinicia en `Ude::flush()`; no añadas singletons mutables.
+- `declare(strict_types=1)` in every file.
+- Do not modify Eloquent behavior: the macros are additive.
+- Do not guess clauses: `LaravelBuilderAdapter` omits the unknown.
+- Feature detection by reflection, never by version number.
+- Commands are conservative: dry-run by default, explicit `--write`/`--force`.
+- Per-request state is reset in `Ude::flush()`; do not add mutable singletons.
 
 ## Pull requests
 
-1. Problema y solución descritos.
-2. Tests que cubran el adaptador/comando tocado.
-3. `CHANGELOG.md` actualizado bajo `Unreleased`.
-4. `docs/` actualizado si cambia la API, un comando o una garantía del modo híbrido.
-5. Confirma que `vendor/bin/phpunit` y phpstan pasan en PHP 8.3 como mínimo.
+1. Problem and solution described.
+2. Tests covering the adapter/command touched.
+3. `CHANGELOG.md` updated under `Unreleased`.
+4. `docs/` updated if the API, a command, or a hybrid-mode guarantee changes.
+5. Confirm that `vendor/bin/phpunit` and phpstan pass on PHP 8.3 at minimum.
 
-Toda contribución se acepta bajo la licencia MIT del proyecto.
+All contributions are accepted under the project's MIT license.

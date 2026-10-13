@@ -1,55 +1,55 @@
 ---
 name: ude-laravel
-description: Capa de integracion Laravel de OrmUniversal (orm-universal/laravel) - service provider, modo hibrido con Eloquent, facade OrmUniversal, puente de modelos y comandos ude:*. Use when integrating UDE into a Laravel app, mixing Eloquent with UDE queries, adding HasUniversalQueries, or running ude:* tooling. Triggers: "orm-universal/laravel", "OrmUniversal facade", "HasUniversalQueries", "ude:", "hybrid mode", "Eloquent bridge".
+description: Laravel integration layer of OrmUniversal (orm-universal/laravel) - service provider, hybrid mode with Eloquent, OrmUniversal facade, model bridge, and ude:* commands. Use when integrating UDE into a Laravel app, mixing Eloquent with UDE queries, adding HasUniversalQueries, or running ude:* tooling. Triggers: "orm-universal/laravel", "OrmUniversal facade", "HasUniversalQueries", "ude:", "hybrid mode", "Eloquent bridge".
 ---
 
 # UDE Laravel (orm-universal/laravel)
 
-## Cuándo usar este paquete
+## When to use this package
 
-- Adoptar UDE dentro de una app Laravel **sin romper Eloquent vanilla** (modo `hybrid`).
-- Exponer el motor universal a través del container y del facade `OrmUniversal`.
-- Medir, mapear, inspeccionar y migrar persistencia con los comandos `ude:*`.
-- Mantener workers largos (Octane, RoadRunner, colas) sin estado contaminado.
+- Adopt UDE inside a Laravel app **without breaking vanilla Eloquent** (`hybrid` mode).
+- Expose the universal engine through the container and the `OrmUniversal` facade.
+- Measure, map, inspect, and migrate persistence with the `ude:*` commands.
+- Keep long-lived workers (Octane, RoadRunner, queues) free of contaminated state.
 
-El Core (`contracts`, `relational`, `nosql`) no depende de Laravel; este paquete es la capa
-de integración (`illuminate/console`, `illuminate/database`, `illuminate/support`).
+The Core (`contracts`, `relational`, `nosql`) does not depend on Laravel; this package is
+the integration layer (`illuminate/console`, `illuminate/database`, `illuminate/support`).
 
-## APIs clave (nombres reales verificados)
+## Key APIs (real verified names)
 
-- Provider: `OrmUniversal\Laravel\OrmUniversalServiceProvider` (auto-discovery). Registra
-  `Ude::class` como singleton, publica `config/orm-universal.php` con tag
-  `orm-universal-config`, registra 16 comandos y los resets de Octane.
+- Provider: `OrmUniversal\Laravel\OrmUniversalServiceProvider` (auto-discovery). Registers
+  `Ude::class` as a singleton, publishes `config/orm-universal.php` with tag
+  `orm-universal-config`, registers 16 commands and the Octane resets.
 - Kernel: `OrmUniversal\Laravel\Ude` → `dialects()`, `types()`, `business()`, `contexts()`,
   `profiler()`, `optimizer()`, `nosql()`, `features()`, `compatibility()`, `connections()`,
   `plugins()`, `bootPlugins()`, `bootNoSql(array $config)`, `flush()`.
 - Facade: `OrmUniversal\Laravel\Facades\OrmUniversal` → `table($table, $connection = null)`,
   `executor($connection = null)`, `kernel()`.
-- Puente Eloquent:
-  - Trait `OrmUniversal\Laravel\Concerns\HasUniversalQueries` →
+- Eloquent bridge:
+  - `OrmUniversal\Laravel\Concerns\HasUniversalQueries` trait →
     `Seller::universal()`, `Seller::universalTable()`, `Seller::universalConnection()`,
     `$seller->universalRecordset()`.
-  - Macros globales en `Illuminate\Database\Eloquent\Builder`:
-    `Seller::query()->universal()` y `Seller::query()->recordset()`.
+  - Global macros on `Illuminate\Database\Eloquent\Builder`:
+    `Seller::query()->universal()` and `Seller::query()->recordset()`.
 - Adapters: `Adapters\LaravelConnectionAdapter` (`executor()`, `dialectFor()`, `pdoHandle()`,
   `summary()`, `flush()`), `LaravelModelAdapter`, `LaravelBuilderAdapter`,
   `LaravelMigrationAdapter`, `LaravelFeatureRegistry`, `LaravelContainerAdapter` (PSR-11).
-- Compatibilidad: `Compatibility\LaravelCompatibilityLayer` (`mode()`, `use()`,
-  `allowsLegacyApis()`, `guardRawSql()`, `guardLegacyApi()`, `report()`) y enum
+- Compatibility: `Compatibility\LaravelCompatibilityLayer` (`mode()`, `use()`,
+  `allowsLegacyApis()`, `guardRawSql()`, `guardLegacyApi()`, `report()`) and enum
   `CompatibilityMode` (`legacy|compatibility|hybrid|optimized|native|strict`).
 
-## Patrones recomendados
+## Recommended patterns
 
-### Consulta híbrida (Eloquent + UDE sobre la misma BD)
+### Hybrid query (Eloquent + UDE over the same DB)
 
 ```php
 use OrmUniversal\Laravel\Facades\OrmUniversal;
 use OrmUniversal\Relational\Ast\Column;
 
-// Vanilla Eloquent sigue igual
+// Vanilla Eloquent stays the same
 $names = \App\Models\Seller::query()->orderBy('name')->pluck('name');
 
-// Misma intención por el motor universal
+// Same intent through the universal engine
 $sellers = OrmUniversal::table('sellers')
     ->where(Column::make('is_active')->eq(true))
     ->orderBy('name')
@@ -60,10 +60,10 @@ foreach ($sellers as $seller) {
 }
 ```
 
-`OrmUniversal::table()` usa la conexión de `config('database.default')` o la que indiques;
-reutiliza el PDO vivo de Laravel y detecta versión real del servidor.
+`OrmUniversal::table()` uses the `config('database.default')` connection or the one you
+specify; it reuses the live Laravel PDO and detects the real server version.
 
-### Puente de modelos (opt-in)
+### Model bridge (opt-in)
 
 ```php
 use Illuminate\Database\Eloquent\Model;
@@ -75,10 +75,10 @@ class Seller extends Model
 }
 
 Seller::universal()->where('is_active', true)->get();
-Seller::query()->recordset();      // macro, no altera resultados Eloquent
+Seller::query()->recordset();      // macro, does not alter Eloquent results
 ```
 
-### Hot reads con streaming
+### Hot reads with streaming
 
 ```php
 $report = OrmUniversal::table('sales')
@@ -87,63 +87,63 @@ $report = OrmUniversal::table('sales')
     ->cursor();
 
 foreach ($report as $row) {
-    // stdClass, cursor PDO real
+    // stdClass, real PDO cursor
 }
 ```
 
-### Flush en workers largos
+### Flush in long workers
 
-El provider ya escucha `RequestTerminated`, `TaskTerminated`, `TickTerminated`,
-`JobProcessed` y `JobFailed` y llama `flush()`. Si construyes un kernel propio, haz
-`$kernel->flush()` al terminar la unidad de trabajo.
+The provider already listens to `RequestTerminated`, `TaskTerminated`, `TickTerminated`,
+`JobProcessed`, and `JobFailed` and calls `flush()`. If you build your own kernel, call
+`$kernel->flush()` when the unit of work finishes.
 
-### Configuración
+### Configuration
 
 `config/orm-universal.php`: `compatibility_mode`, `performance_mode`, `n_plus_one`,
-`profiler`, `cache`, `destructive_statements`, `tooling.report_path` (por defecto
-`storage/ude`), `nosql.default` y `nosql.drivers` (`mongodb`, `redis`, `in_memory`).
-Tras cambiarla: `php artisan config:clear`.
+`profiler`, `cache`, `destructive_statements`, `tooling.report_path` (default
+`storage/ude`), `nosql.default`, and `nosql.drivers` (`mongodb`, `redis`, `in_memory`).
+After changing it: `php artisan config:clear`.
 
-## Comandos `ude:*` (firmas reales)
+## `ude:*` commands (real signatures)
 
-| Comando | Uso |
+| Command | Usage |
 |---|---|
-| `ude:install [--force]` | Publica config y ejecuta `ude:doctor`. |
-| `ude:doctor [--connection=]` | Diagnóstico de entorno/dialecto/capacidades. |
-| `ude:compatibility [--json] [--connection=]` | Reporte de compatibilidad. |
-| `ude:dialect:list` | Dialectos registrados. |
-| `ude:dialect:inspect [--connection=]` | Capacidades del dialecto activo. |
-| `ude:schema:inspect [table] [--connection=] [--json]` | Tablas, columnas, índices, FKs. |
-| `ude:schema:diff [--connection=] [--snapshot=] [--json]` | Diff sin ejecutar DDL. |
-| `ude:schema:generate {table} [--write] [--force]` | Modelo + migración desde el esquema. |
-| `ude:model:inspect {model?} [--json]` | Relaciones, scopes, casts, observers. |
-| `ude:map [--connection=] [--json]` | Mapa BD → tablas → modelos → queries. |
-| `ude:project:analyze [--json] [--path=]` | Clasificación de patrones de persistencia. |
-| `ude:migrate:analyze [--json]` | Clasifica migraciones. |
-| `ude:migrate:codemod [--diff] [--backup] [--interactive] [--path=*]` | Sugerencias; **nunca** escribe. |
+| `ude:install [--force]` | Publishes config and runs `ude:doctor`. |
+| `ude:doctor [--connection=]` | Environment/dialect/capability diagnostics. |
+| `ude:compatibility [--json] [--connection=]` | Compatibility report. |
+| `ude:dialect:list` | Registered dialects. |
+| `ude:dialect:inspect [--connection=]` | Capabilities of the active dialect. |
+| `ude:schema:inspect [table] [--connection=] [--json]` | Tables, columns, indexes, FKs. |
+| `ude:schema:diff [--connection=] [--snapshot=] [--json]` | Diff without running DDL. |
+| `ude:schema:generate {table} [--write] [--force]` | Model + migration from the schema. |
+| `ude:model:inspect {model?} [--json]` | Relations, scopes, casts, observers. |
+| `ude:map [--connection=] [--json]` | Map DB → tables → models → queries. |
+| `ude:project:analyze [--json] [--path=]` | Persistence pattern classification. |
+| `ude:migrate:analyze [--json]` | Classifies migrations. |
+| `ude:migrate:codemod [--diff] [--backup] [--interactive] [--path=*]` | Suggestions; **never** writes. |
 | `ude:query:inspect {table} [--select=*] [--where=*] [--limit=] [--explain]` | SQL, bindings, plan, fingerprint. |
 | `ude:benchmark {table} [--rows=1000] [--connection=]` | Laravel vs UDE (zero/light/cursor). |
-| `ude:cache:clear [--connection=]` | Limpia profiler, contextos y adapters. |
+| `ude:cache:clear [--connection=]` | Clears profiler, contexts, and adapters. |
 
-Los reportes se escriben como JSON + Markdown en `storage/ude/`.
+Reports are written as JSON + Markdown in `storage/ude/`.
 
-## Errores comunes
+## Common errors
 
-- Asumir que `recordset()` devuelve modelos Eloquent: devuelve **zero hydration** (arrays).
-  Usa `light()` para `stdClass`, `entity()` o `models(fn ($row) => ...)`.
-- Llamar al facade fuera de una app Laravel inicializada (sin container/`config()`).
-- Creer que UDE inyecta soft deletes: no hay magia; declara `whereNull('deleted_at')`.
-- Actualizar/borrar sin `where` en modo `strict`/`deny` y recibir excepción (correcto).
-- Cambiar `config/orm-universal.php` sin `config:clear`.
-- Ejecutar `ude:migrate:codemod` esperando escritura: es dry-run por defecto y jamás escribe.
+- Assuming `recordset()` returns Eloquent models: it returns **zero hydration** (arrays).
+  Use `light()` for `stdClass`, `entity()`, or `models(fn ($row) => ...)`.
+- Calling the facade outside an initialized Laravel app (without container/`config()`).
+- Believing UDE injects soft deletes: there is no magic; declare `whereNull('deleted_at')`.
+- Updating/deleting without `where` in `strict`/`deny` mode and getting an exception (correct).
+- Changing `config/orm-universal.php` without `config:clear`.
+- Running `ude:migrate:codemod` expecting writes: it is dry-run by default and never writes.
 
-## Límites honestos
+## Honest limits
 
-- Es una capa de integración: la lógica de motores vive en `relational`/`nosql`.
-- Hace feature detection, no version checks duros de Laravel.
-- `ude:schema:generate` no sobrescribe sin `--force`; los codemods no escriben archivos.
-- La paridad se verifica con tests (`tests/Feature/Ude/SellerUdeTest.php` en el monorepo),
-  no por promesa.
-- Los drivers NoSQL solo se registran si la extensión/cliente está disponible.
-- Los fragmentos de `examples/` de este paquete **no son ejecutables standalone**: requieren
-  una app Laravel con el paquete instalado.
+- It is an integration layer: engine logic lives in `relational`/`nosql`.
+- It does feature detection, not hard Laravel version checks.
+- `ude:schema:generate` does not overwrite without `--force`; codemods do not write files.
+- Parity is verified with tests (`tests/Feature/Ude/SellerUdeTest.php` in the monorepo),
+  not by promise.
+- NoSQL drivers are only registered if the extension/client is available.
+- The fragments in this package's `examples/` **are not standalone executable**: they
+  require a Laravel app with the package installed.

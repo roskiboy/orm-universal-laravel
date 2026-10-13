@@ -1,24 +1,24 @@
-# Modo híbrido — orm-universal/laravel
+# Hybrid mode — orm-universal/laravel
 
-El modo híbrido (default) permite usar Eloquent vanilla y el motor universal en la misma
-aplicación, sin que ninguno altere al otro.
+Hybrid mode (default) allows using vanilla Eloquent and the universal engine in the same
+application, without either altering the other.
 
-## Los seis modos
+## The six modes
 
 `OrmUniversal\Contracts\Enums\CompatibilityMode`:
 
-| Modo | Valor | Significado |
+| Mode | Value | Meaning |
 |---|---|---|
-| Legacy | `legacy` | Solo comportamiento Laravel; la plataforma disponible pasivamente |
-| Compatibility | `compatibility` | Adapters activos; resultados byte-compatibles con Laravel |
-| Hybrid | `hybrid` | Eloquent vanilla + queries/recordsets UDE en paralelo |
-| Optimized | `optimized` | Optimizaciones de plataforma con garantías de compatibilidad |
-| Native | `native` | Plataforma primero; features solo-Laravel reportadas |
-| Strict | `strict` | API legadas y magia ambigua lanzan excepción |
+| Legacy | `legacy` | Laravel-only behavior; the platform available passively |
+| Compatibility | `compatibility` | Adapters active; byte-compatible results with Laravel |
+| Hybrid | `hybrid` | Vanilla Eloquent + UDE queries/recordsets in parallel |
+| Optimized | `optimized` | Platform optimizations with compatibility guarantees |
+| Native | `native` | Platform first; Laravel-only features reported |
+| Strict | `strict` | Legacy APIs and ambiguous magic throw an exception |
 
-`allowsLegacyApis()` es `true` en todos salvo `strict`.
+`allowsLegacyApis()` is `true` in all modes except `strict`.
 
-## Configuración
+## Configuration
 
 ```dotenv
 UDE_COMPATIBILITY_MODE=hybrid
@@ -29,11 +29,11 @@ $kernel = app(\OrmUniversal\Laravel\Ude::class);
 $kernel->compatibility()->mode(); // CompatibilityMode::Hybrid
 ```
 
-`LaravelCompatibilityLayer` permite cambiar el modo en runtime (`use()`).
+`LaravelCompatibilityLayer` allows changing the mode at runtime (`use()`).
 
-## Garantías declaradas
+## Declared guarantees
 
-`report()` devuelve los invariantes del modo activo:
+`report()` returns the invariants of the active mode:
 
 - `eloquent_results_unchanged`
 - `ordering_unchanged`
@@ -42,77 +42,77 @@ $kernel->compatibility()->mode(); // CompatibilityMode::Hybrid
 - `casting_unchanged`
 - `events_unchanged`
 
-El modo híbrido no intercepta consultas de Eloquent: son garantías de no intervención.
+Hybrid mode does not intercept Eloquent queries: these are non-intervention guarantees.
 
-## Guardas de `strict`
+## `strict` guards
 
 ```php
-$layer->guardRawSql($sql, $explicit); // exige SqlFragment::trusted()/parameterized()
-$layer->guardLegacyApi('query');      // rechaza API legada
+$layer->guardRawSql($sql, $explicit); // requires SqlFragment::trusted()/parameterized()
+$layer->guardLegacyApi('query');      // rejects legacy API
 ```
 
-En `strict`, el SQL crudo sin clasificación explícita lanza `QueryException`.
+In `strict`, raw SQL without explicit classification throws `QueryException`.
 
-## Conexiones
+## Connections
 
-`LaravelConnectionAdapter` reutiliza el PDO vivo de Laravel:
+`LaravelConnectionAdapter` reuses the live Laravel PDO:
 
-- `executor($connection, $profiler)` devuelve un `QueryExecutor` cacheado por conexión.
-- `dialectFor()` resuelve el dialecto con la versión real del servidor (SQLite consulta
+- `executor($connection, $profiler)` returns a `QueryExecutor` cached per connection.
+- `dialectFor()` resolves the dialect with the real server version (SQLite queries
   `select sqlite_version()`).
-- `summary()` expone `name`, `driver`, `database` y `server_version`.
-- `flush()` reinicia executors y conexiones cacheadas.
+- `summary()` exposes `name`, `driver`, `database`, and `server_version`.
+- `flush()` resets cached executors and connections.
 
-## Octane y workers
+## Octane and workers
 
-El provider registra `Ude::flush()` en `RequestTerminated`, `TaskTerminated`,
-`TickTerminated`, `JobProcessed` y `JobFailed`. `flush()` reinicia:
+The provider registers `Ude::flush()` on `RequestTerminated`, `TaskTerminated`,
+`TickTerminated`, `JobProcessed`, and `JobFailed`. `flush()` resets:
 
-- `ContextScope` (contextos inmutables de la petición).
+- `ContextScope` (immutable request contexts).
 - `InMemoryProfiler`.
 
-No hay estado global mutable fuera del kernel; en workers de larga duración el flush es
-la frontera de aislamiento.
+There is no mutable global state outside the kernel; in long-lived workers the flush is
+the isolation boundary.
 
-## Fast path AST (intercepto opt-in)
+## AST fast path (opt-in interception)
 
-Los drivers `ude-*` (`ude-sqlite`, `ude-mysql`, `ude-mariadb`, `ude-pgsql`, `ude-sqlsrv`)
-resuelven a la conexión nativa de Laravel con un query builder propio que añade un fast
-path AST, activado con:
+The `ude-*` drivers (`ude-sqlite`, `ude-mysql`, `ude-mariadb`, `ude-pgsql`, `ude-sqlsrv`)
+resolve to the native Laravel connection with their own query builder that adds an AST
+fast path, enabled with:
 
 ```dotenv
 UDE_AUTO=intercept
-# o explícito:
+# or explicitly:
 UDE_AUTO_INTERCEPT=true
-# kill switch absoluto:
+# absolute kill switch:
 UDE_AUTO_INTERCEPT=false
 # config/orm-universal.php
 'auto' => ['mode' => 'intercept', 'intercept' => null],
 ```
 
-Reglas de seguridad del fast path:
+Fast-path safety rules:
 
-- Solo se optimizan formas **whitelisteadas** (from tabla simple, columns string/`*`,
-  wheres Basic/In/Null/NotNull/Between/Column/Nested, joins de una comparación de
-  columnas, orders, groupBy/having Basic, limit/offset, agregados simples). Cualquier
-  otra forma delega en `parent::` sin alterar resultados.
-- El SQL se compila con el compilador UDE pero se ejecuta sobre la **misma conexión
-  Laravel** (mismo PDO, transacción, `useWritePdo` y fetch mode): se preservan
-  `QueryExecuted`, `DB::listen`, el monitor automático y los eventos de modelo.
-- Eloquent hidrata igual (filas `stdClass`), incluidos casts, accessors y soft deletes
-  explícitos.
-- Las conexiones con driver nativo nunca se interceptan, y `UDE_AUTO_INTERCEPT=false`
-  desactiva el fast path incluso con `mode=intercept`.
-- `ude-oracle` queda passthrough: Laravel no incluye conexión Oracle; requiere un
-  resolver OCI8 en la aplicación.
+- Only **whitelisted** shapes are optimized (simple table from, string/`*` columns,
+  Basic/In/Null/NotNull/Between/Column/Nested wheres, joins of a single column
+  comparison, orders, Basic groupBy/having, limit/offset, simple aggregates). Any other
+  shape delegates to `parent::` without altering results.
+- SQL is compiled with the UDE compiler but executed on the **same Laravel connection**
+  (same PDO, transaction, `useWritePdo`, and fetch mode): `QueryExecuted`, `DB::listen`,
+  the automatic monitor, and model events are preserved.
+- Eloquent hydrates the same way (`stdClass` rows), including casts, accessors, and
+  explicit soft deletes.
+- Connections with a native driver are never intercepted, and `UDE_AUTO_INTERCEPT=false`
+  disables the fast path even with `mode=intercept`.
+- `ude-oracle` remains passthrough: Laravel does not include an Oracle connection; it
+  requires an OCI8 resolver in the application.
 
-Verificado fila a fila contra vanilla en SQLite y MariaDB (incluye decimales como
-string, nulls, joins, agregados y paginación por keyset). Integración SQL Server
-implementada a nivel de compilador/conexión, pendiente de infraestructura.
+Verified row by row against vanilla on SQLite and MariaDB (includes decimals as strings,
+nulls, joins, aggregates, and keyset pagination). SQL Server integration implemented at
+the compiler/connection level, pending infrastructure.
 
-## Adopción progresiva sugerida
+## Suggested progressive adoption
 
-1. `legacy`/`compatibility`: medir con `ude:project:analyze` y `ude:map`.
-2. `hybrid`: introducir `universal()`/`recordset()` en lecturas concretas.
-3. `optimized`: activar cache opt-in y analizar portabilidad/desempeño.
-4. `native`/`strict`: solo cuando no queden dependencias de comportamientos legacy.
+1. `legacy`/`compatibility`: measure with `ude:project:analyze` and `ude:map`.
+2. `hybrid`: introduce `universal()`/`recordset()` in specific reads.
+3. `optimized`: enable the opt-in cache and analyze portability/performance.
+4. `native`/`strict`: only once there are no dependencies on legacy behaviors.

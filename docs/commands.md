@@ -1,32 +1,32 @@
-# Comandos `ude:*` — orm-universal/laravel
+# `ude:*` Commands — orm-universal/laravel
 
-Los 23 comandos registrados por `OrmUniversalServiceProvider`. Todos extienden
-`BaseCommand` y resuelven el executor con la conexión indicada.
+The 23 commands registered by `OrmUniversalServiceProvider`. All of them extend
+`BaseCommand` and resolve the executor with the given connection.
 
-| Comando | Firma | Qué hace |
+| Command | Signature | What it does |
 |---|---|---|
-| `ude:install` | `{--force}` | Publica `config/orm-universal.php` (tag `orm-universal-config`) y ejecuta `ude:doctor` |
-| `ude:doctor` | `{--connection=}` | Diagnostica PHP, Laravel, versión del paquete, conexión, driver, extensiones PDO/mongodb/redis, modo, versión del servidor, dialecto, número de capacidades, ping y limitaciones del dialecto |
-| `ude:compatibility` | `{--json} {--connection=}` | Reporte de compatibilidad: PHP, Laravel, paquete, base de datos y driver |
-| `ude:dialect:list` | — | Lista dialectos registrados y su línea de versión por defecto |
-| `ude:dialect:inspect` | `{--connection=}` | Muestra dialecto activo, versión del servidor y capacidades negociadas |
-| `ude:schema:inspect` | `{table?} {--connection=} {--json}` | Inspecciona tablas, columnas, índices y FKs reales |
-| `ude:schema:diff` | `{--connection=} {--snapshot=} {--json}` | Compara el esquema actual contra un snapshot deseado |
-| `ude:schema:generate` | `{table} {--connection=} {--write} {--force}` | Genera esqueleto de modelo y migración desde el esquema real; nunca sobrescribe sin `--force` |
-| `ude:model:inspect` | `{model?} {--json}` | Analiza modelos: relaciones, scopes, casts, accessors/mutators y observers |
-| `ude:map` | `{--connection=} {--json}` | Mapa del proyecto: base de datos → tablas → modelos → relaciones → queries |
-| `ude:project:analyze` | `{--json} {--path=}` | Analiza modelos, queries, llamadas `DB::`, SQL crudo, migraciones y servicios |
-| `ude:migrate:analyze` | `{--json}` | Clasifica migraciones: compatible, convertible, requiere revisión, no soportado, específico del motor |
-| `ude:migrate:codemod` | `{--diff} {--backup} {--interactive} {--path=*}` | Codemod conservador: sugiere conversiones sin modificar archivos (dry-run implícito) |
-| `ude:auto:enable` | `{--connection=*} {--path=} {--dry-run} {--diff} {--backup} {--interactive} {--write} {--force}` | Convierte los `driver` de `config/database.php` a `ude-*` con php-parser (reemplazo quirúrgico, backup opcional, git-dirty guard) |
-| `ude:index:advise` | `{table?} {--connection=} {--json} {--from-profiler}` | Recomienda índices desde el esquema real o desde las muestras del monitor (`--from-profiler`); nunca crea índices |
-| `ude:index:generate` | `{table?} {--connection=} {--from-profiler} {--path=} {--write} {--force} {--json}` | Genera una migración con los índices recomendados; dry-run por defecto, nunca toca datos |
-| `ude:types:map` | `{model?} {--connection=} {--dry-run} {--diff} {--backup} {--write} {--force} {--json}` | Compara columnas reales con `$casts` y sugiere/corrige (decimales siempre string); escribe solo con `--write` y modelos con `$casts` |
-| `ude:query:inspect` | `{table} {--connection=} {--select=*} {--where=*} {--limit=10} {--explain}` | Compila e inspecciona una consulta: SQL, bindings, plan, fingerprint y capacidades |
-| `ude:benchmark` | `{table} {--rows=1000} {--connection=}` | Benchmark reproducible: Laravel Query Builder vs UDE (zero/light/Eloquent) |
-| `ude:cache:clear` | `{--connection=}` | Limpia caches de la plataforma: metadatos, conexiones, profiler y contexto |
+| `ude:install` | `{--force}` | Publishes `config/orm-universal.php` (tag `orm-universal-config`) and runs `ude:doctor` |
+| `ude:doctor` | `{--connection=}` | Diagnoses PHP, Laravel, package version, connection, driver, PDO/mongodb/redis extensions, mode, server version, dialect, capability count, ping, and dialect limitations |
+| `ude:compatibility` | `{--json} {--connection=}` | Compatibility report: PHP, Laravel, package, database, and driver |
+| `ude:dialect:list` | — | Lists registered dialects and their default version line |
+| `ude:dialect:inspect` | `{--connection=}` | Shows the active dialect, server version, and negotiated capabilities |
+| `ude:schema:inspect` | `{table?} {--connection=} {--json}` | Inspects real tables, columns, indexes, and FKs |
+| `ude:schema:diff` | `{--connection=} {--snapshot=} {--json}` | Compares the current schema against a desired snapshot |
+| `ude:schema:generate` | `{table} {--connection=} {--write} {--force}` | Generates a model and migration skeleton from the real schema; never overwrites without `--force` |
+| `ude:model:inspect` | `{model?} {--json}` | Analyzes models: relations, scopes, casts, accessors/mutators, and observers |
+| `ude:map` | `{--connection=} {--json}` | Project map: database → tables → models → relations → queries |
+| `ude:project:analyze` | `{--json} {--path=}` | Analyzes models, queries, `DB::` calls, raw SQL, migrations, and services |
+| `ude:migrate:analyze` | `{--json}` | Classifies migrations: compatible, convertible, requires review, unsupported, engine-specific |
+| `ude:migrate:codemod` | `{--diff} {--backup} {--interactive} {--path=*}` | Conservative codemod: suggests conversions without modifying files (implicit dry-run) |
+| `ude:auto:enable` | `{--connection=*} {--path=} {--dry-run} {--diff} {--backup} {--interactive} {--write} {--force}` | Converts the `driver` entries of `config/database.php` to `ude-*` with php-parser (surgical replacement, optional backup, git-dirty guard) |
+| `ude:index:advise` | `{table?} {--connection=} {--json} {--from-profiler}` | Recommends indexes from the real schema or from the monitor samples (`--from-profiler`); never creates indexes |
+| `ude:index:generate` | `{table?} {--connection=} {--from-profiler} {--path=} {--write} {--force} {--json}` | Generates a migration with the recommended indexes; dry-run by default, never touches data |
+| `ude:types:map` | `{model?} {--connection=} {--dry-run} {--diff} {--backup} {--write} {--force} {--json}` | Compares real columns with `$casts` and suggests/fixes them (decimals always string); writes only with `--write` and models with `$casts` |
+| `ude:query:inspect` | `{table} {--connection=} {--select=*} {--where=*} {--limit=10} {--explain}` | Compiles and inspects a query: SQL, bindings, plan, fingerprint, and capabilities |
+| `ude:benchmark` | `{table} {--rows=1000} {--connection=}` | Reproducible benchmark: Laravel Query Builder vs UDE (zero/light/Eloquent) |
+| `ude:cache:clear` | `{--connection=}` | Clears platform caches: metadata, connections, profiler, and context |
 
-## Ejemplos
+## Examples
 
 ```bash
 php artisan ude:doctor
@@ -37,17 +37,17 @@ php artisan ude:benchmark sellers --rows=5000
 php artisan ude:cache:clear
 ```
 
-## Notas de seguridad
+## Security notes
 
-- `ude:schema:generate` no escribe sin `--write` y no sobrescribe sin `--force`.
-- `ude:migrate:codemod` es dry-run por defecto: nunca modifica archivos silenciosamente.
-- `ude:auto:enable` es dry-run por defecto; solo escribe con `--write` y se niega si
-  `config/database.php` tiene cambios sin commitear (salvo `--force`). Recomendado:
-  rama/commit previo + `--backup`.
-- La política de sentencias destructivas (`destructive_statements`) se respeta en la
-  ejecución de migraciones a través de `LaravelMigrationAdapter`.
+- `ude:schema:generate` does not write without `--write` and does not overwrite without `--force`.
+- `ude:migrate:codemod` is dry-run by default: it never modifies files silently.
+- `ude:auto:enable` is dry-run by default; it only writes with `--write` and refuses if
+  `config/database.php` has uncommitted changes (unless `--force`). Recommended:
+  prior branch/commit + `--backup`.
+- The destructive statement policy (`destructive_statements`) is respected during
+  migration execution through `LaravelMigrationAdapter`.
 
-## Reportes
+## Reports
 
-Los comandos de análisis escriben en `tooling.report_path` (`storage/ude/` por defecto).
-`--json` permite consumir la salida desde CI o scripts.
+Analysis commands write to `tooling.report_path` (`storage/ude/` by default).
+`--json` allows consuming the output from CI or scripts.

@@ -91,6 +91,26 @@ final class UdeInterceptTest extends TestCase
         );
     }
 
+    public function test_straight_join_degrades_with_warning_on_sqlite(): void
+    {
+        $ude = $this->db->connection('ude')->table('probe')
+            ->straightJoin('alt', 'alt.probe_id', '=', 'probe.id')
+            ->select('probe.id', 'alt.label')
+            ->orderBy('probe.id')->orderBy('alt.id')
+            ->get()->all();
+
+        $plain = $this->db->connection('vanilla')->table('probe')
+            ->join('alt', 'alt.probe_id', '=', 'probe.id')
+            ->select('probe.id', 'alt.label')
+            ->orderBy('probe.id')->orderBy('alt.id')
+            ->get()->all();
+
+        self::assertSame(
+            json_encode($plain, JSON_THROW_ON_ERROR),
+            json_encode($ude, JSON_THROW_ON_ERROR),
+        );
+    }
+
     public function test_new_where_shapes_are_intercepted_by_the_mapper(): void
     {
         $mapper = new UdeQueryMapper;

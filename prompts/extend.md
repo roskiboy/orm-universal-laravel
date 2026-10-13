@@ -1,59 +1,60 @@
-# Prompt: extender orm-universal/laravel (adapter, plugin o comando)
+# Prompt: extend orm-universal/laravel (adapter, plugin, or command)
 
-## Contexto
+## Context
 
-La capa Laravel es fina a propósito: provider, adapters, facade, puente Eloquent y comandos.
-Para extenderla, sigue los patrones reales del paquete y no metas lógica de motores aquí.
+The Laravel layer is intentionally thin: provider, adapters, facade, Eloquent bridge, and
+commands. To extend it, follow the real patterns of the package and do not put engine
+logic here.
 
-## Objetivo
+## Goal
 
-Pide a un agente que elija una vía:
+Ask an agent to choose a path:
 
-### 1. Adapter nuevo
+### 1. New adapter
 
-- Modela la clase en `src/Adapters/` siguiendo `LaravelConnectionAdapter`
+- Model the class in `src/Adapters/` following `LaravelConnectionAdapter`
   (`executor()`, `dialectFor()`, `summary()`, `flush()`).
-- No dependas de Laravel en el Core: el adapter traduce, el motor ejecuta.
+- Do not depend on Laravel in the Core: the adapter translates, the engine executes.
 
-### 2. Plugin (dialecto/tipo/negocio)
+### 2. Plugin (dialect/type/business)
 
-- Implementa `OrmUniversal\Contracts\PluginInterface`:
+- Implement `OrmUniversal\Contracts\PluginInterface`:
 
 ```php
 final class MyPlugin implements PluginInterface
 {
     public function name(): string { return 'my-plugin'; }
-    public function register(object $kernel): void { /* registra dialecto/tipo/scopes */ }
-    public function boot(object $kernel): void { /* arranque diferido */ }
+    public function register(object $kernel): void { /* registers dialect/type/scopes */ }
+    public function boot(object $kernel): void { /* deferred boot */ }
 }
 ```
 
-- El kernel (`Ude`) expone `plugins()`, y `bootPlugins()` devuelve los nombres registrados.
+- The kernel (`Ude`) exposes `plugins()`, and `bootPlugins()` returns the registered names.
 
-### 3. Comando `ude:*`
+### 3. `ude:*` command
 
-- Extiende `OrmUniversal\Laravel\Console\BaseCommand` (`kernel()`, `executor()`,
+- Extend `OrmUniversal\Laravel\Console\BaseCommand` (`kernel()`, `executor()`,
   `reportDirectory()`, `writeReport()`).
-- Define `$signature` y `$description` en español, como los 16 existentes.
-- Escribe reportes JSON + Markdown en `config('orm-universal.tooling.report_path')`
-  (`storage/ude` por defecto).
-- Regístralo en `OrmUniversalServiceProvider::boot()` dentro del bloque
-  `runningInConsole()`.
-- Regla dura: los comandos de análisis/codemod **jamás** escriben archivos de la app sin
-  `--write` explícito y confirmación.
+- Define `$signature` and `$description` in Spanish, like the 16 existing ones.
+- Write JSON + Markdown reports under `config('orm-universal.tooling.report_path')`
+  (`storage/ude` by default).
+- Register it in `OrmUniversalServiceProvider::boot()` inside the
+  `runningInConsole()` block.
+- Hard rule: analysis/codemod commands **never** write app files without an explicit
+  `--write` and confirmation.
 
-### 4. Config nueva
+### 4. New config
 
-- Añade la clave en `config/orm-universal.php` con `env()` y documenta el default.
-- Evita romper claves existentes (modo híbrido es el contrato de entrada).
+- Add the key in `config/orm-universal.php` with `env()` and document the default.
+- Avoid breaking existing keys (hybrid mode is the entry contract).
 
-## Reglas
+## Rules
 
-- `declare(strict_types=1)`, una clase por archivo, doc en español.
-- Sin lógica de compilación/conexión en esta capa.
-- Tests en `OrmUniversal\Laravel\Tests\` con la app de test; verifica auto-discovery.
+- `declare(strict_types=1)`, one class per file, docs in Spanish.
+- No compilation/connection logic in this layer.
+- Tests in `OrmUniversal\Laravel\Tests\` with the test app; verify auto-discovery.
 
-## Verificación
+## Verification
 
 ```bash
 composer install

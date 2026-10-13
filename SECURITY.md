@@ -1,54 +1,54 @@
 # Security Policy — orm-universal/laravel
 
-## Versiones soportadas
+## Supported versions
 
-| Versión | Soportada | Notas |
+| Version | Supported | Notes |
 |---|---|---|
-| `0.1.x` | Sí | Línea activa |
-| `< 0.1` | No | No publicada |
+| `0.1.x` | Yes | Active line |
+| `< 0.1` | No | Not published |
 
-Matriz de compatibilidad: PHP 8.3–8.5 y Laravel 12.x/13.x (`illuminate/*`). Fuera de esa
-matriz no se garantizan parches de seguridad.
+Compatibility matrix: PHP 8.3–8.5 and Laravel 12.x/13.x (`illuminate/*`). Outside that
+matrix, security patches are not guaranteed.
 
-## Canal de reporte privado
+## Private reporting channel
 
-No abras issues públicos para vulnerabilidades. Usa el reporte privado de GitHub:
+Do not open public issues for vulnerabilities. Use GitHub private reporting:
 
 - https://github.com/roskiboy/orm-universal-laravel/security/advisories/new
-- Alternativa: contacta a los mantenedores de In-Tech a través del repositorio.
+- Alternative: contact the In-Tech maintainers through the repository.
 
-Incluye versión del paquete, versión de Laravel, descripción, PoC mínima, impacto y
-mitigación. Acuse de recibo orientativo: 72 horas laborables.
+Include the package version, Laravel version, description, minimal PoC, impact, and
+mitigation. Indicative acknowledgment: 72 business hours.
 
-## Alcance
+## Scope
 
-En alcance:
+In scope:
 
-- Ruptura de las garantías del modo híbrido (por ejemplo, que los macros alteren
-  consultas Eloquent o inyecten filtros).
-- Ejecución no solicitada de SQL/DDL desde comandos `ude:*` (deben ser dry-run salvo
+- Breaking the hybrid-mode guarantees (for example, macros altering Eloquent queries or
+  injecting filters).
+- Unrequested SQL/DDL execution from `ude:*` commands (they must be dry-run unless
   `--write`/`--force`).
-- Exposición de credenciales de conexión o datos de consulta en reportes, profiler o
-  mensajes de error originada en este paquete.
-- Evasión de `LaravelCompatibilityLayer` en modo `strict`.
-- Ejecución destructiva que ignore `destructive_statements`.
+- Exposure of connection credentials or query data in reports, profiler, or error
+  messages originating in this package.
+- Bypassing `LaravelCompatibilityLayer` in `strict` mode.
+- Destructive execution that ignores `destructive_statements`.
 
-Fuera de alcance:
+Out of scope:
 
-- Vulnerabilidades de Laravel, `illuminate/*`, PDO, MongoDB o Redis.
-- SQL crudo provisto por la aplicación a `SqlFragment::trusted()`.
-- Configuraciones de `.env` del proyecto consumidor.
+- Vulnerabilities in Laravel, `illuminate/*`, PDO, MongoDB, or Redis.
+- Raw SQL provided by the application to `SqlFragment::trusted()`.
+- `.env` configurations of the consuming project.
 
-## Mitigaciones entregadas
+## Delivered mitigations
 
-- Los adaptadores no modifican modelos ni el query builder de Eloquent.
-- `LaravelBuilderAdapter` omite cláusulas desconocidas en lugar de adivinarlas.
-- `LaravelMigrationAdapter` presenta reporte de seguridad antes de ejecutar DDL.
-- `ude:schema:generate` requiere `--write`; `ude:migrate:codemod` es dry-run.
-- El flush de contexto/profiler evita fugas de estado entre requests.
+- Adapters do not modify Eloquent models or the query builder.
+- `LaravelBuilderAdapter` omits unknown clauses instead of guessing them.
+- `LaravelMigrationAdapter` presents a safety report before running DDL.
+- `ude:schema:generate` requires `--write`; `ude:migrate:codemod` is dry-run.
+- Context/profiler flush prevents state leaks between requests.
 
-## Buenas prácticas para consumidores
+## Best practices for consumers
 
-- Usa `strict` en proyectos nuevos que no dependan de API legadas.
-- Define `destructive_statements` según el entorno (`deny` en producción si aplica).
-- No incluyas los reportes de `storage/ude/` en artefactos públicos.
+- Use `strict` in new projects that do not depend on legacy APIs.
+- Define `destructive_statements` per environment (`deny` in production if applicable).
+- Do not include `storage/ude/` reports in public artifacts.

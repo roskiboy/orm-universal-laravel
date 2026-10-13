@@ -1,42 +1,42 @@
-# Prompt: migrar rutas calientes de Eloquent a UDE manteniendo paridad total
+# Prompt: migrate hot Eloquent paths to UDE while keeping full parity
 
-## Contexto
+## Context
 
-Migración gradual y no destructiva en una app Laravel. El modo por defecto `hybrid` garantiza
-que Eloquent siga funcionando. Guía canónica: `docs/ude/MIGRATION_FROM_LARAVEL.md`.
+Gradual, non-destructive migration in a Laravel app. The default `hybrid` mode guarantees
+that Eloquent keeps working. Canonical guide: `docs/ude/MIGRATION_FROM_LARAVEL.md`.
 
-## Objetivo
+## Goal
 
-Pide a un agente que ejecute este protocolo de 12 pasos:
+Ask an agent to run this 12-step protocol:
 
-1. Instalar: `composer require orm-universal/laravel` + `php artisan ude:install`.
-2. Analizar: `php artisan ude:project:analyze` (reporte en `storage/ude/`).
-3. Backup: rama/commit antes de tocar nada.
-4. Confirmar `compatibility_mode=hybrid`.
-5. Provider activo por auto-discovery.
-6. (Opcional) `HasUniversalQueries` en modelos candidatos.
-7. (Opcional) `ude:model:inspect` para ver relaciones/scopes.
-8. Sugerencias: `ude:migrate:codemod --diff` (nunca escribe).
-9. Migrar reads pesados a `recordset()/cursor()` en servicios/repositorios.
-10. Validar migraciones: `ude:migrate:analyze` y `ude:schema:diff --snapshot=`.
-11. Benchmark: `ude:benchmark <tabla> --rows=10000`.
-12. Evaluar `compatibility_mode=optimized` solo con paridad verificada.
+1. Install: `composer require orm-universal/laravel` + `php artisan ude:install`.
+2. Analyze: `php artisan ude:project:analyze` (report in `storage/ude/`).
+3. Backup: branch/commit before touching anything.
+4. Confirm `compatibility_mode=hybrid`.
+5. Provider active via auto-discovery.
+6. (Optional) `HasUniversalQueries` on candidate models.
+7. (Optional) `ude:model:inspect` to see relations/scopes.
+8. Suggestions: `ude:migrate:codemod --diff` (never writes).
+9. Migrate heavy reads to `recordset()/cursor()` in services/repositories.
+10. Validate migrations: `ude:migrate:analyze` and `ude:schema:diff --snapshot=`.
+11. Benchmark: `ude:benchmark <table> --rows=10000`.
+12. Evaluate `compatibility_mode=optimized` only with verified parity.
 
-## Reglas anti-rotura
+## Anti-breakage rules
 
-- No cambiar escrituras, eventos, casts ni soft deletes en la misma fase.
-- Un test de paridad por ruta migrada: mismo resultado, mismo orden, mismos nulos.
-- Si el resultado difiere, revertir a Eloquent: híbrido lo permite.
-- Los codemods son dry-run: el agente jamás debe escribir archivos "silenciosamente".
-- Documentar cada decisión y el rollback.
+- Do not change writes, events, casts, or soft deletes in the same phase.
+- One parity test per migrated path: same result, same order, same nulls.
+- If the result differs, revert to Eloquent: hybrid allows it.
+- Codemods are dry-run: the agent must never write files "silently".
+- Document every decision and the rollback.
 
-## Entregables
+## Deliverables
 
-- Read paths migrados con tests de paridad.
-- `storage/ude/benchmark.json|.md` antes/después.
-- Lista de pendientes con causa (relación Eloquent, evento, cast, soft delete).
+- Read paths migrated with parity tests.
+- `storage/ude/benchmark.json|.md` before/after.
+- List of pending items with cause (Eloquent relation, event, cast, soft delete).
 
-## Verificación
+## Verification
 
 ```bash
 php artisan ude:project:analyze

@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace OrmUniversal\Laravel\Console;
 
 use Illuminate\Foundation\Application;
+use OrmUniversal\Laravel\Adapters\LaravelModelAdapter;
 use OrmUniversal\Laravel\Analysis\ParityAnalyzer;
 use OrmUniversal\Relational\Ast\SelectQuery;
 use OrmUniversal\Relational\Builder\QueryBuilder;
 use OrmUniversal\Relational\Migration\SchemaBuilder;
+use OrmUniversal\Relational\Relation\RelationDefinition;
 
 final class ParityApiCommand extends BaseCommand
 {
@@ -27,6 +29,16 @@ final class ParityApiCommand extends BaseCommand
         'Illuminate\Database\Eloquent\Builder' => [
             QueryBuilder::class,
             SelectQuery::class,
+        ],
+        'Illuminate\Database\Eloquent\Model' => [
+            LaravelModelAdapter::class,
+            QueryBuilder::class,
+        ],
+        'Illuminate\Database\Eloquent\Relations\Relation' => [
+            RelationDefinition::class,
+        ],
+        'Illuminate\Database\Schema\Builder' => [
+            SchemaBuilder::class,
         ],
         'Illuminate\Database\Schema\Blueprint' => [
             SchemaBuilder::class,

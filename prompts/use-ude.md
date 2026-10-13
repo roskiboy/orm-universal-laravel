@@ -1,23 +1,23 @@
-# Prompt: integrar orm-universal/laravel en una app Laravel
+# Prompt: integrate orm-universal/laravel into a Laravel app
 
-## Contexto
+## Context
 
-La app usa Eloquent y quiere adoptar el motor universal en modo híbrido, sin cambiar
-comportamiento existente. El paquete `orm-universal/laravel` aporta provider con
-auto-discovery, facade, puente de modelos, adapters y comandos `ude:*`.
+The app uses Eloquent and wants to adopt the universal engine in hybrid mode, without
+changing existing behavior. The `orm-universal/laravel` package provides a provider with
+auto-discovery, a facade, a model bridge, adapters, and `ude:*` commands.
 
-## Objetivo
+## Goal
 
-Pide a un agente que:
+Ask an agent to:
 
-1. Instale los paquetes y publique la configuración:
+1. Install the packages and publish the configuration:
 
 ```bash
 composer require orm-universal/contracts orm-universal/relational orm-universal/nosql orm-universal/laravel
 php artisan ude:install
 ```
 
-2. Verifique entorno y compatibilidad:
+2. Verify environment and compatibility:
 
 ```bash
 php artisan ude:doctor
@@ -25,8 +25,8 @@ php artisan ude:compatibility --json
 php artisan ude:dialect:list
 ```
 
-3. Mantenga `compatibility_mode=hybrid` en `config/orm-universal.php`.
-4. Use el facade para lecturas nuevas:
+3. Keep `compatibility_mode=hybrid` in `config/orm-universal.php`.
+4. Use the facade for new reads:
 
 ```php
 use OrmUniversal\Laravel\Facades\OrmUniversal;
@@ -38,27 +38,27 @@ $active = OrmUniversal::table('sellers')
     ->recordset();
 ```
 
-5. Opcionalmente añada `HasUniversalQueries` a un modelo y exponga `Seller::universal()`.
-6. Escriba un test de paridad Eloquent ↔ UDE (mismo resultado y mismo orden).
+5. Optionally add `HasUniversalQueries` to a model and expose `Seller::universal()`.
+6. Write an Eloquent ↔ UDE parity test (same result and same order).
 
-## Reglas
+## Rules
 
-- No romper Eloquent vanilla: el paquete promete resultados equivalentes, pero el test lo
-  demuestra en **tu** app.
-- `recordset()` es zero hydration (arrays). Para objetos: `light()`, `entity()`,
+- Do not break vanilla Eloquent: the package promises equivalent results, but the test
+  proves it in **your** app.
+- `recordset()` is zero hydration (arrays). For objects: `light()`, `entity()`,
   `models(fn ($row) => ...)`.
-- Soft deletes: declara `->whereNull('deleted_at')` explícitamente.
-- `UPDATE`/`DELETE` sin `where`: configúralo con `destructive_statements` y confirma.
-- En workers largos, confía en el `flush()` del provider o llámalo al terminar.
-- Tras tocar config: `php artisan config:clear`.
+- Soft deletes: declare `->whereNull('deleted_at')` explicitly.
+- `UPDATE`/`DELETE` without `where`: configure it with `destructive_statements` and confirm.
+- In long workers, trust the provider's `flush()` or call it when finishing.
+- After touching config: `php artisan config:clear`.
 
-## Entregables
+## Deliverables
 
-- Paquetes instalados + config publicada y versionada.
-- Un test de paridad y un caso de lectura caliente migrado (o decisión documentada).
-- Reporte de `ude:doctor`/`ude:compatibility` en `storage/ude/`.
+- Packages installed + config published and versioned.
+- A parity test and one migrated hot read case (or a documented decision).
+- `ude:doctor`/`ude:compatibility` report in `storage/ude/`.
 
-## Verificación
+## Verification
 
 ```bash
 php artisan ude:doctor
@@ -66,8 +66,9 @@ php artisan test
 vendor/bin/phpstan analyse -c phpstan-packages.neon
 ```
 
-## Ejemplos del repo
+## Repo examples
 
-`examples/basic.php` (facade), `intermediate.php` (trait/macros), `advanced.php` (recordsets
-y streaming), `expert.php` (kernel/adapters/config), `extreme.php` (comandos y ciclo de
-adopción). Recuerda: son fragmentos de integración, no scripts standalone.
+`examples/basic.php` (facade), `intermediate.php` (trait/macros), `advanced.php`
+(recordsets and streaming), `expert.php` (kernel/adapters/config), `extreme.php`
+(commands and adoption cycle). Remember: they are integration fragments, not standalone
+scripts.

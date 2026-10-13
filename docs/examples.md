@@ -1,8 +1,8 @@
-# Ejemplos — orm-universal/laravel
+# Examples — orm-universal/laravel
 
-Ejemplos ejecutables contra la API real del paquete.
+Examples runnable against the real API of the package.
 
-## Lectura con la fachada y modos de hidratación
+## Reading with the facade and hydration modes
 
 ```php
 use OrmUniversal\Laravel\Facades\OrmUniversal;
@@ -11,13 +11,13 @@ $builder = OrmUniversal::table('sellers')
     ->where('is_active', true)
     ->orderBy('name');
 
-$arrays = $builder->get();               // hidratación por defecto
+$arrays = $builder->get();               // default hydration
 $objects = OrmUniversal::table('sellers')->light()->get();
 $entity = OrmUniversal::table('sellers')->entity(App\Entities\Seller::class)->get();
 $models = OrmUniversal::table('sellers')->models(fn ($row) => new App\Models\Seller((array) $row))->get();
 ```
 
-## Recordsets y streaming
+## Recordsets and streaming
 
 ```php
 use OrmUniversal\Contracts\RecordsetInterface;
@@ -27,15 +27,15 @@ $recordset->count();
 $recordset->map(fn ($row) => $row['total'] * 1.21)->toArray();
 
 OrmUniversal::table('orders')->lazy(500)->each(function ($row) {
-    // procesa por lotes sin materializar todo
+    // processes in batches without materializing everything
 });
 
 OrmUniversal::table('orders')->chunk(1000, function ($records) {
-    return true; // false detiene
+    return true; // false stops
 });
 ```
 
-## Modelo Eloquent con trait
+## Eloquent model with the trait
 
 ```php
 namespace App\Models;
@@ -52,7 +52,7 @@ $active = Seller::universal()->where('is_active', true)->recordset();
 $all = (new Seller)->universalRecordset();
 ```
 
-## Macros desde cualquier Builder
+## Macros from any Builder
 
 ```php
 $ude = Seller::query()
@@ -65,7 +65,7 @@ $ude->fingerprint();
 $ude->sql();
 ```
 
-## Puente de cláusulas Eloquent
+## Eloquent clause bridge
 
 ```php
 use OrmUniversal\Laravel\Adapters\LaravelBuilderAdapter;
@@ -77,16 +77,16 @@ $recordset = $adapter->recordset(
 );
 ```
 
-Solo si las cláusulas copiadas cubren la consulta completa; las desconocidas se omiten.
+Only if the copied clauses cover the entire query; unknown ones are omitted.
 
-## Inspección de esquema
+## Schema inspection
 
 ```bash
 php artisan ude:schema:inspect orders --json
 php artisan ude:schema:diff --snapshot=storage/ude/schema.json
 ```
 
-## NoSQL desde el kernel
+## NoSQL from the kernel
 
 ```php
 $nosql = OrmUniversal::nosql();
@@ -100,5 +100,5 @@ $recent = $nosql->collection('events')->where('type', 'login')->find();
 
 ```php
 $events = OrmUniversal::profiler()->events();
-OrmUniversal::kernel()->flush(); // reinicia contextos y profiler
+OrmUniversal::kernel()->flush(); // resets contexts and profiler
 ```

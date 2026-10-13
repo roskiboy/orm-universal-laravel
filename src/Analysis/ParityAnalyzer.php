@@ -223,26 +223,6 @@ final class ParityAnalyzer
     ];
 
     /**
-     * Real features deferred with an explicit reason and alternative.
-     *
-     * @var array<string, array<string, string>>
-     */
-    private const DEFERRED = [
-        'Illuminate\Database\Query\Builder' => [
-            'straightJoin' => 'Hint exclusivo de MySQL; alternativa actual: `raw()` en la tabla.',
-            'straightJoinSub' => 'Hint exclusivo de MySQL; alternativa actual: `joinSub()` + `raw()`.',
-            'straightJoinWhere' => 'Hint exclusivo de MySQL; alternativa actual: `joinWhere()` + `raw()`.',
-            'timeout' => 'Laravel solo almacena el valor (no lo aplica por consulta en 13.35); alternativa actual: `statement_timeout` del servidor y RetryPolicy.',
-            'insertOrIgnoreReturning' => 'Combinación INSERT IGNORE + RETURNING divergente por motor; alternativa actual: `insertOrIgnore()` + `returning()` en el AST.',
-            'whereVectorSimilarTo' => 'Búsqueda vectorial: requiere MariaDB 11.7+/pgvector; el stack corre MariaDB 11.6. API reservada.',
-            'whereVectorDistanceLessThan' => 'Búsqueda vectorial: requiere MariaDB 11.7+/pgvector; el stack corre MariaDB 11.6. API reservada.',
-            'orWhereVectorDistanceLessThan' => 'Búsqueda vectorial: requiere MariaDB 11.7+/pgvector; el stack corre MariaDB 11.6. API reservada.',
-            'selectVectorDistance' => 'Búsqueda vectorial: requiere MariaDB 11.7+/pgvector; el stack corre MariaDB 11.6. API reservada.',
-            'orderByVectorDistance' => 'Búsqueda vectorial: requiere MariaDB 11.7+/pgvector; el stack corre MariaDB 11.6. API reservada.',
-        ],
-    ];
-
-    /**
      * Architectural default per source class: applied after parity, aliases,
      * internals and explicit rules.
      *
@@ -250,6 +230,9 @@ final class ParityAnalyzer
      */
     private const DEFAULTS = [
         'Illuminate\Database\Eloquent\Builder' => 'Sugar de modelo Eloquent; el modo híbrido conserva Eloquent intacto (ADR-006).',
+        'Illuminate\Database\Eloquent\Model' => 'Modelo Eloquent: constructor de consultas, eventos y casting viven en Eloquent; el modo híbrido lo conserva (ADR-006).',
+        'Illuminate\Database\Eloquent\Relations\Relation' => 'Relaciones Eloquent; UDE las modela con RelationDefinition/RelationQuery y batch loader (ADR-006).',
+        'Illuminate\Database\Schema\Builder' => 'DDL declarativo vía SchemaOperation + SchemaBuilder; los helpers Eloquent-específicos no aplican (ADR-007).',
         'Illuminate\Database\Schema\Blueprint' => 'Definición declarativa vía ColumnDefinition/IndexDefinition/ForeignKeyDefinition + SchemaOperation (ADR-007); la API fluida de Blueprint no se replica.',
     ];
 
@@ -345,12 +328,6 @@ final class ParityAnalyzer
 
         if ($na !== null) {
             return ['type' => self::NA, 'reason' => $na];
-        }
-
-        $defer = self::DEFERRED[$source][$method] ?? null;
-
-        if ($defer !== null) {
-            return ['type' => self::DEFER, 'reason' => $defer];
         }
 
         $default = self::DEFAULTS[$source] ?? null;

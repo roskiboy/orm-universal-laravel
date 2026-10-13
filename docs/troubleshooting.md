@@ -1,65 +1,66 @@
 # Troubleshooting — orm-universal/laravel
 
-## El provider no se registra
+## The provider is not registered
 
-1. Confirma `composer dump-autoload`.
-2. Revisa `extra.laravel.providers` en el `composer.json` del paquete.
-3. Si tu Laravel no usa auto-discovery, regístralo a mano en `config/app.php`.
-4. `php artisan ude:doctor` falla con "Command not found": comprueba que el provider
-   está cargado y que ejecutas en consola.
+1. Confirm `composer dump-autoload`.
+2. Review `extra.laravel.providers` in the package's `composer.json`.
+3. If your Laravel does not use auto-discovery, register it manually in `config/app.php`.
+4. `php artisan ude:doctor` fails with "Command not found": check that the provider
+   is loaded and that you are running in console.
 
-## `config/orm-universal.php` no existe
+## `config/orm-universal.php` does not exist
 
-Es normal: el provider hace `mergeConfigFrom`. Para tener el archivo editable:
+This is normal: the provider does `mergeConfigFrom`. To have an editable file:
 
 ```bash
 php artisan vendor:publish --tag=orm-universal-config
 ```
 
-## La fachada `OrmUniversal` no resuelve
+## The `OrmUniversal` facade does not resolve
 
-- Verifica el alias `OrmUniversal` → `OrmUniversal\Laravel\Facades\OrmUniversal`.
-- El accessor es `Ude::class`; confirma con `app()->bound(Ude::class)`.
-- Tras cambiar configuración de providers, limpia caches: `php artisan optimize:clear`.
+- Verify the `OrmUniversal` alias → `OrmUniversal\Laravel\Facades\OrmUniversal`.
+- The accessor is `Ude::class`; confirm with `app()->bound(Ude::class)`.
+- After changing provider configuration, clear caches: `php artisan optimize:clear`.
 
-## `ude:doctor` no puede conectar
+## `ude:doctor` cannot connect
 
-Revisa la conexión Laravel indicada (`--connection=`), que PDO tenga el driver
-correspondiente (`php -m`) y que la base de datos exista. El comando imprime la tabla de
-checks aunque falle la conexión y devuelve `FAILURE`.
+Review the given Laravel connection (`--connection=`), that PDO has the corresponding
+driver (`php -m`), and that the database exists. The command prints the checks table
+even if the connection fails and returns `FAILURE`.
 
-## Los macros `universal()`/`recordset()` no existen
+## The `universal()`/`recordset()` macros do not exist
 
-El provider los registra solo si `Illuminate\Database\Eloquent\Builder` existe. Si usas
-una versión sin esa clase o un stub propio, los macros no se instalan; usa
-`OrmUniversal::table()` o el trait `HasUniversalQueries`.
+The provider registers them only if `Illuminate\Database\Eloquent\Builder` exists. If you
+use a version without that class or a stub of your own, the macros are not installed; use
+`OrmUniversal::table()` or the `HasUniversalQueries` trait.
 
-## `strict` lanza `QueryException` con SQL crudo
+## `strict` throws `QueryException` with raw SQL
 
-Es el comportamiento documentado: envuelve el SQL en `SqlFragment::trusted()` o
-`SqlFragment::parameterized()` para declarar su naturaleza, o cambia de modo.
+This is the documented behavior: wrap the SQL in `SqlFragment::trusted()` or
+`SqlFragment::parameterized()` to declare its nature, or switch modes.
 
-## Comportamiento raro tras varias requests (Octane/queues)
+## Odd behavior after several requests (Octane/queues)
 
-Llama `Ude::flush()` al final de procesos propios. En Octane el provider ya escucha los
-eventos terminados; si desactivas esos listeners, gestiona el flush manualmente.
+Call `Ude::flush()` at the end of your own processes. In Octane the provider already
+listens to the termination events; if you disable those listeners, manage the flush
+manually.
 
-## `UnsupportedFeatureException` de NoSQL
+## NoSQL `UnsupportedFeatureException`
 
-El driver no soporta la capacidad (por ejemplo, agregación en Redis). Revisa
-`OrmUniversal::nosql()->driver()->capabilities()` y las alternativas de la excepción.
+The driver does not support the capability (for example, aggregation in Redis). Review
+`OrmUniversal::nosql()->driver()->capabilities()` and the alternatives in the exception.
 
-## `ude:schema:generate` no escribe
+## `ude:schema:generate` does not write
 
-Comportamiento intencional: añade `--write`; para sobrescribir, además `--force`.
-`ude:migrate:codemod` siempre es dry-run.
+Intentional behavior: add `--write`; to overwrite, also `--force`.
+`ude:migrate:codemod` is always dry-run.
 
-## El benchmark o los análisis tardan demasiado
+## The benchmark or the analyses take too long
 
-Ajusta `tooling.model_paths` y usa `--limit`/`--rows` menores. Los reportes quedan en
-`storage/ude/`; limpia con `php artisan ude:cache:clear`.
+Adjust `tooling.model_paths` and use smaller `--limit`/`--rows`. Reports are kept in
+`storage/ude/`; clean them with `php artisan ude:cache:clear`.
 
-## Errores de PHPStan por clases de Octane
+## PHPStan errors due to Octane classes
 
-Están ignorados en `phpstan.neon.dist` (`class.notFound`) de forma deliberada: las
-integraciones opcionales se resuelven con `class_exists`.
+They are deliberately ignored in `phpstan.neon.dist` (`class.notFound`): optional
+integrations are resolved with `class_exists`.

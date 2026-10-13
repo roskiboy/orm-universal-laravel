@@ -1,51 +1,51 @@
 # AGENTS.md — orm-universal/laravel
 
-Guía para agentes de IA y contribuyentes automatizados.
+Guide for AI agents and automated contributors.
 
-## Arquitectura mínima
+## Minimal architecture
 
 ```text
 src/
-├── OrmUniversalServiceProvider.php   (auto-discovery, config, comandos, macros, Octane)
-├── Ude.php                           (kernel: registries, contextos, profiler, NoSQL)
-├── Adapters/                         (conexión, feature registry, modelo, builder, migración)
-├── Compatibility/                    (seis modos de adopción)
-├── Concerns/HasUniversalQueries.php  (trait opcional para modelos)
-├── Console/                          (16 comandos ude:*)
+├── OrmUniversalServiceProvider.php   (auto-discovery, config, commands, macros, Octane)
+├── Ude.php                           (kernel: registries, contexts, profiler, NoSQL)
+├── Adapters/                         (connection, feature registry, model, builder, migration)
+├── Compatibility/                    (six adoption modes)
+├── Concerns/HasUniversalQueries.php  (optional trait for models)
+├── Console/                          (16 ude:* commands)
 ├── Analysis/                         (ModelInspector, ProjectAnalyzer, Codemod)
 ├── Facades/OrmUniversal.php
 └── config/orm-universal.php
 ```
 
-Depende de `contracts`, `relational`, `nosql` e `illuminate/console|database|support`.
-El Core de esos paquetes nunca importa `Illuminate\*`; la dependencia solo existe en
-esta capa.
+Depends on `contracts`, `relational`, `nosql`, and `illuminate/console|database|support`.
+The Core of those packages never imports `Illuminate\*`; the dependency exists only in
+this layer.
 
-## Regla principal: no romper Eloquent vanilla
+## Main rule: do not break vanilla Eloquent
 
-1. **Prohibido modificar el comportamiento de Eloquent.** Los macros `universal()` y
-   `recordset()` son aditivos; jamás inyectan filtros ni alteran resultados, orden,
-   casts, eventos o transacciones.
-2. **No hay interceptores globales.** Si el usuario no invoca la plataforma, el
-   comportamiento debe ser Laravel puro.
-3. **No adivinar cláusulas.** `LaravelBuilderAdapter` copia solo lo que entiende; lo
-   desconocido se omite.
-4. **No tocar modelos.** `LaravelModelAdapter` lee metadatos por reflexión sin ejecutar el
-   constructor del modelo ni modificarlo.
-5. **Detección por features, nunca por versión.** Usa `LaravelFeatureRegistry`
-   (`class_exists`, reflexión). Prohibido comparar números de versión de Laravel.
-6. **Estado por request.** Cualquier estado acumulado debe limpiarse en `Ude::flush()`,
-   invocado desde los eventos de Octane/queue.
+1. **Modifying Eloquent behavior is forbidden.** The `universal()` and `recordset()`
+   macros are additive; they never inject filters or alter results, order, casts,
+   events, or transactions.
+2. **There are no global interceptors.** If the user does not invoke the platform, the
+   behavior must be pure Laravel.
+3. **Do not guess clauses.** `LaravelBuilderAdapter` copies only what it understands;
+   the unknown is omitted.
+4. **Do not touch models.** `LaravelModelAdapter` reads metadata by reflection without
+   running the model constructor or modifying it.
+5. **Detect by features, never by version.** Use `LaravelFeatureRegistry`
+   (`class_exists`, reflection). Comparing Laravel version numbers is forbidden.
+6. **Per-request state.** Any accumulated state must be cleared in `Ude::flush()`,
+   invoked from the Octane/queue events.
 
-## Reglas del repo
+## Repo rules
 
-- `declare(strict_types=1)` en todos los archivos.
-- Los comandos son conservadores: dry-run por defecto; `--write` y `--force` explícitos.
-- Las garantías de `LaravelCompatibilityLayer::report()` no se relajan sin release
-  mayor y guía de migración.
-- No añadas dependencias fuera de `illuminate/*` y los paquetes `orm-universal/*`.
+- `declare(strict_types=1)` in every file.
+- Commands are conservative: dry-run by default; `--write` and `--force` explicit.
+- The guarantees of `LaravelCompatibilityLayer::report()` are not relaxed without a
+  major release and a migration guide.
+- Do not add dependencies outside `illuminate/*` and the `orm-universal/*` packages.
 
-## Comandos
+## Commands
 
 ```bash
 composer install
@@ -54,25 +54,25 @@ vendor/bin/phpstan analyse
 vendor/bin/pint
 ```
 
-Gates: los cuatro sin errores. CI prueba PHP 8.3–8.5; los tests de la capa Laravel se
-ejecutan contra el framework instalado.
+Gates: all four with no errors. CI tests PHP 8.3–8.5; the Laravel layer tests run
+against the installed framework.
 
-## Convenciones
+## Conventions
 
 - PSR-4: `OrmUniversal\Laravel\` → `src/`; tests `OrmUniversal\Laravel\Tests\`.
-- Comandos: firma `ude:<área>:<acción>` y descripción en español como en el resto de la
-  consola del paquete.
-- Nombres de clases y métodos en inglés; docs y textos de consola en español.
-- `final class` por defecto; adaptadores sin estado salvo cachés explícitas.
+- Commands: `ude:<area>:<action>` signature and description in Spanish as in the rest of
+  the package console.
+- Class and method names in English; package docs in English and console text in Spanish.
+- `final class` by default; stateless adapters except for explicit caches.
 
-## Al modificar adaptadores
+## When modifying adapters
 
-1. Añade/actualiza test en `tests/AdaptersTest.php` o `tests/CompatibilityTest.php`.
-2. Verifica que Eloquent sigue intacto (resultado, orden, nulls).
-3. Actualiza `docs/eloquent.md`, `docs/relations.md` o `docs/hybrid-mode.md` según
-   corresponda.
+1. Add/update a test in `tests/AdaptersTest.php` or `tests/CompatibilityTest.php`.
+2. Verify that Eloquent is still intact (result, order, nulls).
+3. Update `docs/eloquent.md`, `docs/relations.md`, or `docs/hybrid-mode.md` as
+   appropriate.
 
-## No tocar
+## Do not touch
 
-- No edites `README.md`, `CHANGELOG.md` de release ni `LICENSE` sin instrucción.
-- No modifiques `.github/` ni `composer.json` salvo tarea de release.
+- Do not edit `README.md`, release `CHANGELOG.md`, or `LICENSE` without instruction.
+- Do not modify `.github/` or `composer.json` except for a release task.

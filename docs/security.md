@@ -1,49 +1,49 @@
-# Seguridad — orm-universal/laravel
+# Security — orm-universal/laravel
 
-## Principios
+## Principles
 
-1. **Eloquent no se modifica.** No hay interceptores globales que puedan cambiar
-   resultados, filtros ni transacciones.
-2. **Modo `strict` opcional** para equipos que quieren errores ante API legadas o SQL
-   crudo sin clasificar:
+1. **Eloquent is not modified.** There are no global interceptors that could change
+   results, filters, or transactions.
+2. **Optional `strict` mode** for teams that want errors on legacy APIs or unclassified
+   raw SQL:
    ```php
-   $layer->guardRawSql($sql, $explicit); // exige SqlFragment::trusted()/parameterized()
-   $layer->guardLegacyApi('query');      // lanza QueryException
+   $layer->guardRawSql($sql, $explicit); // requires SqlFragment::trusted()/parameterized()
+   $layer->guardLegacyApi('query');      // throws QueryException
    ```
-3. **Valores como bindings** en todo el motor relacional subyacente; las cláusulas
-   copiadas por `LaravelBuilderAdapter` conservan los valores como datos, no como SQL.
-4. **Política de sentencias destructivas** configurable:
-   `allow`, `warn`, `require_confirmation`, `deny` (`destructive_statements`). Se aplica
-   en la ejecución de migraciones vía `LaravelMigrationAdapter`, que además presenta
-   reporte de seguridad previo.
-5. **Comandos conservadores**: `ude:schema:generate` requiere `--write`; `ude:migrate:codemod`
-   es dry-run implícito y nunca escribe silenciosamente.
+3. **Values as bindings** throughout the underlying relational engine; the clauses copied
+   by `LaravelBuilderAdapter` keep values as data, not as SQL.
+4. **Configurable destructive statement policy**:
+   `allow`, `warn`, `require_confirmation`, `deny` (`destructive_statements`). It is applied
+   when running migrations via `LaravelMigrationAdapter`, which also presents a prior
+   safety report.
+5. **Conservative commands**: `ude:schema:generate` requires `--write`; `ude:migrate:codemod`
+   is an implicit dry-run and never writes silently.
 
-## Credenciales y datos
+## Credentials and data
 
-- La conexión se toma de Laravel (`config('database.connections.*')`); el paquete no
-  almacena credenciales propias.
-- Las credenciales NoSQL viven en `config/orm-universal.php` / `.env`
-  (`UDE_MONGODB_URI`, `UDE_REDIS_*`). No las incluyas en reportes ni en logs.
-- `ude:doctor` y `ude:map` pueden incluir nombres de conexión/tabla; revisa la salida
-  antes de compartirla.
-- El profiler (`profiler.enabled`, `limit`) registra eventos de consulta; en entornos
-  sensibles, desactívalo o limita su retención.
+- The connection is taken from Laravel (`config('database.connections.*')`); the package
+  does not store credentials of its own.
+- NoSQL credentials live in `config/orm-universal.php` / `.env`
+  (`UDE_MONGODB_URI`, `UDE_REDIS_*`). Do not include them in reports or logs.
+- `ude:doctor` and `ude:map` may include connection/table names; review the output
+  before sharing it.
+- The profiler (`profiler.enabled`, `limit`) records query events; in sensitive
+  environments, disable it or limit its retention.
 
-## Estado en workers
+## State in workers
 
-El provider reinicia contexto y profiler en `RequestTerminated`, `TaskTerminated`,
-`TickTerminated`, `JobProcessed` y `JobFailed`. Si ejecutas la plataforma fuera de esos
-eventos (procesos propios), llama `Ude::flush()` explícitamente.
+The provider resets context and profiler on `RequestTerminated`, `TaskTerminated`,
+`TickTerminated`, `JobProcessed`, and `JobFailed`. If you run the platform outside those
+events (your own processes), call `Ude::flush()` explicitly.
 
-## Superficie de ataque relevante
+## Relevant attack surface
 
-- Entrada de usuario usada en `where(Column::..., $value)`: correcto (binding).
-- Entrada de usuario en `SqlFragment::trusted()`: responsabilidad de la aplicación.
-- Patrones `regex` en NoSQL: no se sanean.
-- `ude:project:analyze` inspecciona el proyecto, no ejecuta SQL de usuario.
+- User input used in `where(Column::..., $value)`: correct (binding).
+- User input in `SqlFragment::trusted()`: the application's responsibility.
+- `regex` patterns in NoSQL: they are not sanitized.
+- `ude:project:analyze` inspects the project, it does not execute user SQL.
 
-## Alcance
+## Scope
 
-Los fallos de Laravel, PDO, MongoDB o Redis quedan fuera del alcance de este paquete.
-Reporta vulnerabilidades de la capa de integración por el canal privado de `SECURITY.md`.
+Failures in Laravel, PDO, MongoDB, or Redis are out of scope for this package.
+Report integration-layer vulnerabilities through the private channel in `SECURITY.md`.

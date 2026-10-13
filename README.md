@@ -5,37 +5,37 @@
 [![PHP](https://img.shields.io/badge/php-%5E8.3-8892BF.svg)](https://www.php.net)
 [![Laravel](https://img.shields.io/badge/laravel-12.x%20%7C%2013.x-FF2D20.svg)](https://laravel.com)
 
-Capa de integración Laravel de la **Universal Data Platform**: service provider con
-auto-discovery, adapters, modo híbrido (Eloquent intacto), puente de modelos y 16 comandos
-`ude:*`. El Core (`contracts`, `relational`, `nosql`) no depende de Laravel.
+Laravel integration layer of the **Universal Data Platform**: service provider with
+auto-discovery, adapters, hybrid mode (Eloquent untouched), model bridge, and 16 `ude:*`
+commands. The Core (`contracts`, `relational`, `nosql`) does not depend on Laravel.
 
-## Instalación
+## Installation
 
 ```bash
 composer require orm-universal/laravel
 php artisan ude:install
 ```
 
-Publica `config/orm-universal.php` con modos de adopción, N+1, profiler, política de
-sentencias destructivas y drivers NoSQL.
+Publishes `config/orm-universal.php` with adoption modes, N+1, profiler, destructive
+statement policy, and NoSQL drivers.
 
-## Uso híbrido
+## Hybrid usage
 
 ```php
 use OrmUniversal\Laravel\Facades\OrmUniversal;
 use OrmUniversal\Relational\Ast\Column;
 
-// Vanilla Eloquent sigue funcionando sin cambios.
+// Vanilla Eloquent keeps working unchanged.
 $eloquent = App\Models\Seller::query()->orderBy('name')->pluck('name');
 
-// El mismo resultado por el motor universal.
+// The same result through the universal engine.
 $ude = OrmUniversal::table('sellers')
     ->where(Column::make('is_active')->eq(true))
     ->orderBy('name')
     ->recordset();
 ```
 
-Puente Eloquent (opcional):
+Eloquent bridge (optional):
 
 ```php
 use OrmUniversal\Laravel\Concerns\HasUniversalQueries;
@@ -46,21 +46,22 @@ class Seller extends Model
 }
 
 Seller::universal()->where('is_active', true)->get();
-Seller::query()->recordset(); // macro global, no altera resultados
+Seller::query()->recordset(); // global macro, does not alter results
 ```
 
-## Comandos
+## Commands
 
 `ude:install`, `ude:doctor`, `ude:compatibility`, `ude:dialect:list`, `ude:dialect:inspect`,
 `ude:schema:inspect`, `ude:schema:diff`, `ude:schema:generate`, `ude:model:inspect`,
 `ude:map`, `ude:project:analyze`, `ude:migrate:analyze`, `ude:migrate:codemod`
-(dry-run por defecto, nunca escribe silenciosamente), `ude:query:inspect`,
+(dry-run by default, never writes silently), `ude:query:inspect`,
 `ude:benchmark`, `ude:cache:clear`.
 
 ## Octane / workers
 
-El provider registra `flush()` de contexto y profiler en `RequestTerminated`,
-`TaskTerminated`, `TickTerminated`, `JobProcessed` y `JobFailed`. Sin estado global mutable.
+The provider registers context and profiler `flush()` on `RequestTerminated`,
+`TaskTerminated`, `TickTerminated`, `JobProcessed`, and `JobFailed`. No mutable global
+state.
 
 ## Tests
 
@@ -70,7 +71,7 @@ vendor/bin/phpunit
 vendor/bin/phpstan analyse
 ```
 
-## Estado
+## Status
 
-`0.1.0` · Modo híbrido verificado en el monorepo (`tests/Feature/Ude/SellerUdeTest.php`):
-paridad Eloquent↔UDE, recordsets, escrituras y soft deletes explícitos.
+`0.1.0` · Hybrid mode verified in the monorepo (`tests/Feature/Ude/SellerUdeTest.php`):
+Eloquent↔UDE parity, recordsets, writes, and explicit soft deletes.

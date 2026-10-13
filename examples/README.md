@@ -1,10 +1,10 @@
-# Ejemplos de integración: orm-universal/laravel
+# Integration examples: orm-universal/laravel
 
-> **Estos archivos NO se ejecutan standalone.** Son fragmentos de integración para copiar
-> dentro de una app Laravel con `orm-universal/laravel` instalado (provider con
-> auto-discovery). `run.php` solo imprime este requisito y termina con exit 0.
+> **These files do NOT run standalone.** They are integration fragments to copy
+> into a Laravel app with `orm-universal/laravel` installed (provider with
+> auto-discovery). `run.php` only prints this requirement and exits with code 0.
 
-## Requisitos para usarlos de verdad
+## Requirements to actually use them
 
 ```bash
 composer require orm-universal/contracts orm-universal/relational orm-universal/nosql orm-universal/laravel
@@ -12,28 +12,28 @@ php artisan ude:install
 ```
 
 - Laravel 12.x / 13.x.
-- Provider `OrmUniversal\Laravel\OrmUniversalServiceProvider` (auto-discovery).
-- Config publicada en `config/orm-universal.php` (modo por defecto: `hybrid`).
+- `OrmUniversal\Laravel\OrmUniversalServiceProvider` provider (auto-discovery).
+- Config published at `config/orm-universal.php` (default mode: `hybrid`).
 
-## Ejecución del runner
+## Running the runner
 
 ```bash
-php examples/run.php   # imprime que los fragmentos requieren una app Laravel; exit 0
+php examples/run.php   # prints that the fragments require a Laravel app; exit 0
 ```
 
-## Archivos
+## Files
 
-| Archivo | Contenido |
+| File | Content |
 |---|---|
-| `basic.php` | Facade `OrmUniversal::table('sellers')` junto a Eloquent vanilla. |
-| `intermediate.php` | Trait `HasUniversalQueries`, macros `universal()/recordset()`, hidratación light. |
-| `advanced.php` | Recordsets, cursor/streaming, profiler y `LaravelCompatibilityLayer::report()`. |
-| `expert.php` | Kernel `Ude`, adapters, config, registro NoSQL y `flush()` para Octane/queues. |
-| `extreme.php` | Ciclo de adopción completo: comandos, codemod dry-run, paridad y benchmark. |
+| `basic.php` | `OrmUniversal::table('sellers')` facade next to vanilla Eloquent. |
+| `intermediate.php` | `HasUniversalQueries` trait, `universal()/recordset()` macros, light hydration. |
+| `advanced.php` | Recordsets, cursor/streaming, profiler, and `LaravelCompatibilityLayer::report()`. |
+| `expert.php` | `Ude` kernel, adapters, config, NoSQL registration, and `flush()` for Octane/queues. |
+| `extreme.php` | Full adoption cycle: commands, codemod dry-run, parity, and benchmark. |
 
-## Notas
+## Notes
 
-- `recordset()` devuelve **zero hydration** (arrays); para objetos usa `light()`/`entity()`.
-- UDE no inyecta soft deletes: declara `whereNull('deleted_at')` cuando aplique.
-- Los reportes de los comandos se escriben en `storage/ude/`.
-- Los codemods (`ude:migrate:codemod`) son dry-run y nunca escriben archivos.
+- `recordset()` returns **zero hydration** (arrays); for objects use `light()`/`entity()`.
+- UDE does not inject soft deletes: declare `whereNull('deleted_at')` when applicable.
+- Command reports are written to `storage/ude/`.
+- Codemods (`ude:migrate:codemod`) are dry-run and never write files.

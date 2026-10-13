@@ -1,22 +1,22 @@
-# Política de Documentación — orm-universal/laravel
+# Documentation Policy — orm-universal/laravel
 
-## Principio
+## Principle
 
-La documentación describe **API y comportamiento reales**. En esta capa importa además
-documentar garantías: qué no hace la integración (no tocar Eloquent, no adivinar
-cláusulas, no escribir sin `--write`).
+Documentation describes the **real API and behavior**. In this layer it also matters to
+document guarantees: what the integration does not do (does not touch Eloquent, does not
+guess clauses, does not write without `--write`).
 
-## Estructura
+## Structure
 
 ```text
 docs/
 ├── installation.md
 ├── quickstart.md
-├── laravel.md        (provider, kernel Ude, fachada, config)
-├── eloquent.md       (macros, trait, adaptador de builder)
+├── laravel.md        (provider, kernel Ude, facade, config)
+├── eloquent.md       (macros, trait, builder adapter)
 ├── relations.md      (LaravelModelAdapter, RelationDefinition)
-├── commands.md       (16 comandos ude:*)
-├── hybrid-mode.md    (modos y garantías)
+├── commands.md       (16 ude:* commands)
+├── hybrid-mode.md    (modes and guarantees)
 ├── examples.md
 ├── security.md
 ├── testing.md
@@ -24,28 +24,26 @@ docs/
 └── releases.md
 ```
 
-## Versionado por tag (snapshot)
+## Versioning by tag (snapshot)
 
-- Cada tag `vX.Y.Z` congela `docs/` y el `CHANGELOG.md` de esa versión.
-- `main` puede describir trabajo no publicado, etiquetado `unreleased`.
-- Al etiquetar, verifica que la tabla de comandos y los modos de compatibilidad coinciden
-  con el código.
-- Las notas de seguridad pueden añadirse retroactivamente a tags afectados sin
-  reescribirlos.
+- Each `vX.Y.Z` tag freezes `docs/` and the `CHANGELOG.md` of that version.
+- `main` may describe unpublished work, labeled `unreleased`.
+- When tagging, verify that the command table and the compatibility modes match the code.
+- Security notes may be added retroactively to affected tags without rewriting them.
 
-## Reglas
+## Rules
 
-1. Un cambio en el provider, `Ude`, la fachada, los adaptadores, los macros o un comando
-   exige actualizar `docs/` en el mismo PR.
-2. Los ejemplos deben poder ejecutarse contra la versión documentada.
-3. Documenta las limitaciones (MorphTo no inferido, cláusulas omitidas, dry-run) junto a
-   la capacidad, no en notas al pie.
-4. Español técnico; identificadores y comandos sin traducir.
-5. Archivos de 40 a 120 líneas.
+1. A change to the provider, `Ude`, the facade, the adapters, the macros, or a command
+   requires updating `docs/` in the same PR.
+2. Examples must be runnable against the documented version.
+3. Document limitations (MorphTo not inferred, omitted clauses, dry-run) next to the
+   capability, not in footnotes.
+4. Technical English; identifiers and commands are not translated.
+5. Files of 40 to 120 lines.
 
-## Revisión
+## Review
 
-- Todo PR de `src/` indica si afecta a docs.
-- Los PRs de solo documentación pasan los gates de estilo; no requieren tests nuevos.
-- Las afirmaciones sobre compatibilidad con Laravel deben estar cubiertas por CI o por
-  una verificación reproducible descrita en el PR.
+- Every `src/` PR states whether it affects docs.
+- Docs-only PRs pass the style gates; they do not require new tests.
+- Claims about Laravel compatibility must be covered by CI or by a reproducible
+  verification described in the PR.

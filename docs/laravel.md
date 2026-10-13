@@ -1,87 +1,87 @@
 # Laravel — orm-universal/laravel
 
-Arquitectura de integración real: provider, kernel `Ude`, fachada y configuración.
+Real integration architecture: provider, `Ude` kernel, facade, and configuration.
 
 ## Service provider
 
-`OrmUniversal\Laravel\OrmUniversalServiceProvider` (auto-discovery declarado en
+`OrmUniversal\Laravel\OrmUniversalServiceProvider` (auto-discovery declared in
 `composer.json` → `extra.laravel.providers`).
 
 `register()`:
 
 - `mergeConfigFrom(config/orm-universal.php, 'orm-universal')`.
-- Singleton `Ude::class` creado con `Ude::create()`; aplica
-  `compatibility_mode` del config y ejecuta `bootNoSql()`.
-- Alias de contenedor `'orm-universal'`.
+- `Ude::class` singleton created with `Ude::create()`; applies the config's
+  `compatibility_mode` and runs `bootNoSql()`.
+- Container alias `'orm-universal'`.
 
 `boot()`:
 
-- En consola: publica el tag `orm-universal-config` y registra los 16 comandos `ude:*`.
-- `registerEloquentBridge()`: macros `universal()` y `recordset()` en
-  `Illuminate\Database\Eloquent\Builder` (si la clase existe).
-- `registerOctaneResets()`: llama `Ude::flush()` en `RequestTerminated`,
-  `TaskTerminated`, `TickTerminated`, `JobProcessed` y `JobFailed` cuando existen.
+- In console: publishes the `orm-universal-config` tag and registers the 16 `ude:*` commands.
+- `registerEloquentBridge()`: `universal()` and `recordset()` macros on
+  `Illuminate\Database\Eloquent\Builder` (if the class exists).
+- `registerOctaneResets()`: calls `Ude::flush()` on `RequestTerminated`,
+  `TaskTerminated`, `TickTerminated`, `JobProcessed`, and `JobFailed` when they exist.
 
-`provides()` devuelve `[Ude::class, 'orm-universal']`.
+`provides()` returns `[Ude::class, 'orm-universal']`.
 
-## Kernel `Ude`
+## `Ude` kernel
 
-`OrmUniversal\Laravel\Ude` expone el estado de la plataforma:
+`OrmUniversal\Laravel\Ude` exposes the platform state:
 
-| Método | Devuelve |
+| Method | Returns |
 |---|---|
-| `create(): self` | Kernel con dialectos y tipos por defecto |
-| `dialects(): DialectRegistry` | Dialectos disponibles |
-| `types(): TypeRegistry` | Tipos universales |
-| `business(): BusinessRegistry` | Scopes/specs/operaciones |
-| `contexts(): ContextScope` | Contextos Octane-safe |
-| `profiler(): InMemoryProfiler` | Eventos de consulta |
-| `optimizer(): Optimizer` | Pipeline de optimización |
-| `nosql(): DocumentStore` | Colecciones NoSQL |
-| `features(): LaravelFeatureRegistry` | Detección de features de Laravel |
-| `compatibility(): LaravelCompatibilityLayer` | Modo de adopción |
-| `connections(): LaravelConnectionAdapter` | Puente a conexiones Laravel |
-| `plugins(): PluginRegistry` | Plugins registrados |
-| `bootPlugins(): array` | Registra, arranca y devuelve nombres |
-| `bootNoSql(array $config): void` | Registra drivers del config |
-| `flush(): void` | Reinicia contextos y profiler |
+| `create(): self` | Kernel with default dialects and types |
+| `dialects(): DialectRegistry` | Available dialects |
+| `types(): TypeRegistry` | Universal types |
+| `business(): BusinessRegistry` | Scopes/specs/operations |
+| `contexts(): ContextScope` | Octane-safe contexts |
+| `profiler(): InMemoryProfiler` | Query events |
+| `optimizer(): Optimizer` | Optimization pipeline |
+| `nosql(): DocumentStore` | NoSQL collections |
+| `features(): LaravelFeatureRegistry` | Laravel feature detection |
+| `compatibility(): LaravelCompatibilityLayer` | Adoption mode |
+| `connections(): LaravelConnectionAdapter` | Bridge to Laravel connections |
+| `plugins(): PluginRegistry` | Registered plugins |
+| `bootPlugins(): array` | Registers, boots, and returns names |
+| `bootNoSql(array $config): void` | Registers drivers from the config |
+| `flush(): void` | Resets contexts and profiler |
 
-## Fachada `OrmUniversal`
+## `OrmUniversal` facade
 
 `OrmUniversal\Laravel\Facades\OrmUniversal` (accessor `Ude::class`).
 
-Métodos propios:
+Own methods:
 
 - `table(string $table, ?string $connection = null): QueryBuilder`
 - `executor(?string $connection = null): QueryExecutor`
 - `kernel(): Ude`
 
-Métodos delegados vía docblock: `dialects()`, `types()`, `business()`, `nosql()`,
+Methods delegated via docblock: `dialects()`, `types()`, `business()`, `nosql()`,
 `profiler()`, `features()`, `compatibility()`, `connections()`.
 
-## Configuración (`config/orm-universal.php`)
+## Configuration (`config/orm-universal.php`)
 
-| Clave | Valores | Default |
+| Key | Values | Default |
 |---|---|---|
 | `compatibility_mode` | legacy, compatibility, hybrid, optimized, native, strict | `hybrid` |
 | `performance_mode` | safe, balanced, fast, extreme | `balanced` |
 | `n_plus_one.mode` | ignore, warning, log, exception, telemetry | `warning` |
-| `n_plus_one.threshold` | entero | `2` |
-| `profiler.enabled` / `limit` | bool / entero | `true` / `500` |
+| `n_plus_one.threshold` | integer | `2` |
+| `profiler.enabled` / `limit` | bool / integer | `true` / `500` |
 | `cache.enabled`, `store`, `ttl` | opt-in | `false`, null, `60` |
 | `destructive_statements` | allow, warn, require_confirmation, deny | `warn` |
-| `tooling.report_path` | ruta | `storage/ude` |
-| `tooling.model_paths` | rutas | `app/Models` |
+| `tooling.report_path` | path | `storage/ude` |
+| `tooling.model_paths` | paths | `app/Models` |
 | `tooling.model_namespace` | namespace | `App\Models` |
 | `nosql.default` | `mongodb`, `redis`, `in-memory` | `mongodb` |
-| `nosql.drivers.*` | enabled y parámetros | ver archivo |
+| `nosql.drivers.*` | enabled and parameters | see file |
 
-Variables de entorno equivalentes con prefijo `UDE_` (`UDE_COMPATIBILITY_MODE`,
+Equivalent environment variables with the `UDE_` prefix (`UDE_COMPATIBILITY_MODE`,
 `UDE_MONGODB_URI`, `UDE_REDIS_HOST`, …).
 
-## Detección de features
+## Feature detection
 
-`LaravelFeatureRegistry` nunca compara números de versión: detecta por reflexión
+`LaravelFeatureRegistry` never compares version numbers: it detects by reflection
 (`octane`, `eloquent_builder_macros`, `model_macroable`, `query_builder_morph`,
 `schema_blueprint_foreign_id`, `connection_pdo_accessor`, `pagination_cursor`,
 `db_transaction_retry`, `queue_serializes_models`).

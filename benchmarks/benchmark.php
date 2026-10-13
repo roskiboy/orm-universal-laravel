@@ -134,7 +134,7 @@ if (isset($options['json']) || isset($options['markdown'])) {
     }
 
     if (isset($options['markdown'])) {
-        $lines = ['# Benchmark Eloquent vs UDE (SQLite)', '', 'Dataset: **'.$rows.' filas**', '', '| Mode | Rows | Time (ms) | Rows/sec | Mem (KB) |', '|---|---|---|---|---|'];
+        $lines = ['# Benchmark Eloquent vs UDE (SQLite)', '', 'Dataset: **'.$rows.' rows**', '', '| Mode | Rows | Time (ms) | Rows/sec | Mem (KB) |', '|---|---|---|---|---|'];
         foreach ($results as $row) {
             $lines[] = '| '.$row['mode'].' | '.$row['rows'].' | '.$row['time_ms'].' | '.$row['rows_per_sec'].' | '.$row['memory_kb'].' |';
         }

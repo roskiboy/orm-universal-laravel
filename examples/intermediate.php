@@ -1,7 +1,7 @@
 <?php
 
-// FRAGMENTO de integración: requiere una app Laravel con orm-universal/laravel
-// instalado. NO ejecutar standalone.
+// Integration FRAGMENT: requires a Laravel app with orm-universal/laravel
+// installed. Do NOT run standalone.
 
 declare(strict_types=1);
 
@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use OrmUniversal\Laravel\Concerns\HasUniversalQueries;
 use OrmUniversal\Relational\Ast\Column;
 
-// --- Puente opt-in: trait en el modelo --------------------------------------
+// --- Opt-in bridge: trait on the model --------------------------------------
 
 final class SellerWithUniversal extends Model
 {
@@ -19,29 +19,29 @@ final class SellerWithUniversal extends Model
     protected $table = 'sellers';
 }
 
-// QueryBuilder UDE sobre la tabla/conexión del modelo.
+// UDE QueryBuilder over the model's table/connection.
 $active = SellerWithUniversal::universal()
     ->where(Column::make('is_active')->eq(true))
     ->orderBy('name')
     ->get();
 
-// Recordset completo de la tabla.
+// Full recordset of the table.
 $all = (new SellerWithUniversal)->universalRecordset();
 
-// Helpers del trait.
+// Trait helpers.
 $table = SellerWithUniversal::universalTable();       // 'sellers'
 $connection = SellerWithUniversal::universalConnection();
 
-// --- Macros globales en Eloquent Builder ------------------------------------
+// --- Global macros on the Eloquent Builder ----------------------------------
 
-$recordset = Seller::query()->recordset();            // no altera resultados Eloquent
+$recordset = Seller::query()->recordset();            // does not alter Eloquent results
 $universal = Seller::query()->universal()->where('is_active', true)->get();
 
-// --- Hidratación ------------------------------------------------------------
+// --- Hydration --------------------------------------------------------------
 
 $light = SellerWithUniversal::universal()->light()->first();   // stdClass
 
-// Modelos Eloquent reales a partir de filas crudas (factory).
+// Real Eloquent models from raw rows (factory).
 $models = SellerWithUniversal::universal()
     ->models(fn (array $row) => Seller::query()->newFromBuilder($row))
     ->limit(100)

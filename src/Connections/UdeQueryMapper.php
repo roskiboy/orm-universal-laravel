@@ -233,7 +233,7 @@ final class UdeQueryMapper
         }
 
         $type = strtolower((string) $join->type);
-        if (! in_array($type, ['inner', 'left', 'right', 'cross'], true)) {
+        if (! in_array($type, ['inner', 'left', 'right', 'cross', 'straight_join'], true)) {
             return false;
         }
 
@@ -300,6 +300,7 @@ final class UdeQueryMapper
         match ($type) {
             'left' => $ast->leftJoin($table, $on),
             'right' => $ast->rightJoin($table, $on),
+            'straight_join' => $ast->straightJoin($table, $on),
             default => $ast->join($table, $on),
         };
 

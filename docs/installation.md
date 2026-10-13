@@ -1,40 +1,40 @@
-# Instalación — orm-universal/laravel
+# Installation — orm-universal/laravel
 
-## Requisitos
+## Requirements
 
-| Requisito | Versión |
+| Requirement | Version |
 |---|---|
 | PHP | `^8.3` |
 | Laravel (`illuminate/*`) | `^12.0 \|\| ^13.0` |
-| `orm-universal/contracts` | `^0.1` (dependencia) |
-| `orm-universal/relational` | `^0.1` (dependencia) |
-| `orm-universal/nosql` | `^0.1` (dependencia) |
+| `orm-universal/contracts` | `^0.1` (dependency) |
+| `orm-universal/relational` | `^0.1` (dependency) |
+| `orm-universal/nosql` | `^0.1` (dependency) |
 | Composer | 2.x |
 
-El paquete incluye auto-discovery del service provider y del alias de fachada.
+The package includes auto-discovery of the service provider and the facade alias.
 
-## Instalación
+## Installation
 
 ```bash
 composer require orm-universal/laravel
 php artisan ude:install
 ```
 
-`ude:install` publica la configuración y ejecuta `ude:doctor` para diagnosticar entorno,
-extensiones, conexión, dialecto y capacidades.
+`ude:install` publishes the configuration and runs `ude:doctor` to diagnose environment,
+extensions, connection, dialect, and capabilities.
 
-## Publicar la configuración
+## Publishing the configuration
 
-La publicación se hace con el tag `orm-universal-config`:
+Publishing is done with the `orm-universal-config` tag:
 
 ```bash
 php artisan vendor:publish --tag=orm-universal-config
 ```
 
-Genera `config/orm-universal.php`. En el service provider la configuración se fusiona
-con `mergeConfigFrom`, por lo que los valores por defecto existen aunque no publiques.
+Generates `config/orm-universal.php`. In the service provider the configuration is merged
+with `mergeConfigFrom`, so the default values exist even if you do not publish it.
 
-## Registro manual (sin auto-discovery)
+## Manual registration (without auto-discovery)
 
 ```php
 // config/app.php
@@ -46,7 +46,7 @@ con `mergeConfigFrom`, por lo que los valores por defecto existen aunque no publ
 ],
 ```
 
-## Instalación desde el monorepo (path repository)
+## Installing from the monorepo (path repository)
 
 ```json
 {
@@ -62,15 +62,15 @@ con `mergeConfigFrom`, por lo que los valores por defecto existen aunque no publ
 }
 ```
 
-## Drivers opcionales
+## Optional drivers
 
-- MongoDB: `ext-mongodb` + `mongodb/mongodb:^2.4`, habilitado con
+- MongoDB: `ext-mongodb` + `mongodb/mongodb:^2.4`, enabled with
   `UDE_MONGODB_ENABLED=true`.
-- Redis: `ext-redis`, habilitado con `UDE_REDIS_ENABLED=true` (por defecto `false`).
+- Redis: `ext-redis`, enabled with `UDE_REDIS_ENABLED=true` (`false` by default).
 
-`InMemoryDriver` se registra por defecto (`UDE_IN_MEMORY_ENABLED=true`).
+`InMemoryDriver` is registered by default (`UDE_IN_MEMORY_ENABLED=true`).
 
-## Verificación
+## Verification
 
 ```bash
 php artisan ude:doctor

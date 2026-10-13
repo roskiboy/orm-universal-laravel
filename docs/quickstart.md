@@ -1,6 +1,6 @@
 # Quickstart — orm-universal/laravel
 
-## 1. Instalar y diagnosticar
+## 1. Install and diagnose
 
 ```bash
 composer require orm-universal/laravel
@@ -8,9 +8,9 @@ php artisan ude:install
 php artisan ude:doctor
 ```
 
-`ude:install` deja el modo híbrido activo: Eloquent sigue funcionando sin cambios.
+`ude:install` leaves hybrid mode active: Eloquent keeps working unchanged.
 
-## 2. Primera consulta con la fachada
+## 2. First query with the facade
 
 ```php
 use OrmUniversal\Laravel\Facades\OrmUniversal;
@@ -22,17 +22,17 @@ $rows = OrmUniversal::table('sellers')
     ->get();
 ```
 
-`OrmUniversal::table()` usa la conexión por defecto (`config('database.default')`) salvo
-que pases otra. El executor reutiliza el PDO vivo de Laravel y detecta la versión real
-del servidor para resolver el dialecto.
+`OrmUniversal::table()` uses the default connection (`config('database.default')`) unless
+you pass another one. The executor reuses the live Laravel PDO and detects the real
+server version to resolve the dialect.
 
-## 3. Recordset sobre Eloquent
+## 3. Recordset over Eloquent
 
 ```php
-// Vanilla Eloquent intacto
+// Vanilla Eloquent intact
 $names = App\Models\Seller::query()->orderBy('name')->pluck('name');
 
-// Mismo modelo, motor universal
+// Same model, universal engine
 $recordset = App\Models\Seller::universal()
     ->where('is_active', true)
     ->recordset();
@@ -42,16 +42,16 @@ foreach ($recordset as $row) {
 }
 ```
 
-## 4. Macros globales
+## 4. Global macros
 
 ```php
-Seller::query()->recordset(); // RecordsetInterface de la tabla del modelo
+Seller::query()->recordset(); // RecordsetInterface of the model's table
 ```
 
-`universal()` y `recordset()` son macros globales de `Illuminate\Database\Eloquent\Builder`
-registradas por el provider; no alteran los resultados de Eloquent.
+`universal()` and `recordset()` are global macros of `Illuminate\Database\Eloquent\Builder`
+registered by the provider; they do not alter Eloquent results.
 
-## 5. Configuración esencial
+## 5. Essential configuration
 
 ```dotenv
 UDE_COMPATIBILITY_MODE=hybrid
@@ -61,13 +61,13 @@ UDE_PROFILER_ENABLED=true
 UDE_DESTRUCTIVE_STATEMENTS=warn
 ```
 
-Todas las claves y valores por defecto están en `config/orm-universal.php`.
+All keys and default values are in `config/orm-universal.php`.
 
-## 6. Siguiente paso
+## 6. Next step
 
 ```bash
 php artisan ude:project:analyze
 php artisan ude:map
 ```
 
-Ambos generan reportes en `storage/ude/` (ruta configurable en `tooling.report_path`).
+Both generate reports in `storage/ude/` (path configurable in `tooling.report_path`).

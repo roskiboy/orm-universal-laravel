@@ -1,14 +1,14 @@
 <?php
 
-// FRAGMENTO de integración: requiere una app Laravel con orm-universal/laravel
-// instalado. NO ejecutar standalone.
+// Integration FRAGMENT: requires a Laravel app with orm-universal/laravel
+// installed. Do NOT run standalone.
 
 declare(strict_types=1);
 
 use OrmUniversal\Laravel\Facades\OrmUniversal;
 use OrmUniversal\Relational\Ast\Column;
 
-// --- Streaming real sobre PDO para exportaciones ----------------------------
+// --- Real streaming over PDO for exports ------------------------------------
 
 $export = OrmUniversal::table('sales')
     ->select('id', 'seller_id', 'total', 'created_at')
@@ -18,24 +18,24 @@ $export = OrmUniversal::table('sales')
     ->cursor();
 
 foreach ($export as $row) {
-    // stdClass; el cursor no re-ejecuta ni materializa todo
+    // stdClass; the cursor does not re-execute or materialize everything
     $total = $row->total;
 }
 
-// chunk() entrega bloques sin re-ejecutar la consulta.
+// chunk() delivers blocks without re-running the query.
 OrmUniversal::table('sales')
     ->where('status', 'pending')
     ->chunk(500, function (array $chunk, int $page): bool {
-        // procesar $chunk; devolver false detiene
+        // process $chunk; returning false stops
         return true;
     });
 
-// Paginación length-aware.
+// Length-aware pagination.
 $page = OrmUniversal::table('sellers')->orderBy('name')->paginate(25, 2);
 $page->total();
 $page->lastPage();
 
-// --- Profiler y modo de compatibilidad --------------------------------------
+// --- Profiler and compatibility mode ----------------------------------------
 
 $profiler = OrmUniversal::kernel()->profiler();
 $report = OrmUniversal::kernel()->compatibility()->report();
@@ -43,5 +43,5 @@ $report = OrmUniversal::kernel()->compatibility()->report();
 
 $mode = OrmUniversal::kernel()->compatibility()->mode(); // CompatibilityMode::Hybrid
 
-// Los reportes de tooling viven en storage/ude (config orm-universal.tooling.report_path).
+// Tooling reports live in storage/ude (config orm-universal.tooling.report_path).
 $reportPath = config('orm-universal.tooling.report_path');
