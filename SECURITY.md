@@ -15,7 +15,7 @@ matriz no se garantizan parches de seguridad.
 No abras issues públicos para vulnerabilidades. Usa el reporte privado de GitHub:
 
 - https://github.com/roskiboy/orm-universal-laravel/security/advisories/new
-- Alternativa: contacta a los mantenedores de In-Tech a través del repositorio.
+- Alternativa: contacta al mantenedor (roskiboy) a través del repositorio.
 
 Incluye versión del paquete, versión de Laravel, descripción, PoC mínima, impacto y
 mitigación. Acuse de recibo orientativo: 72 horas laborables.
