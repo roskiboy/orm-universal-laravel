@@ -45,6 +45,25 @@ Operational checklist for publishing a version of `roskiboy/orm-universal-larave
 - [ ] GitHub release with notes (`php tools/release.php --notes`).
 - [ ] Verify resolution in Composer (`roskiboy/orm-universal-laravel:X.Y.Z`).
 
+## Automatización del release (deploy key)
+
+El workflow `Release` promueve `[Unreleased]`, hace commit, crea el tag y publica la
+release cuando `main` recibe entradas nuevas de CHANGELOG. Como `main-protection` exige
+pull request, el push del bot necesita un **deploy key** incluido en el bypass del
+ruleset (la app "GitHub Actions" no es elegible). Configuración única:
+
+1. Genera una llave: `ssh-keygen -t ed25519 -C "orm-universal-release-bot" -f release-key`
+   (sin passphrase).
+2. Repo → **Settings → Deploy keys → Add deploy key**: pega `release-key.pub`, marca
+   **Allow write access** y guarda.
+3. Ruleset `main-protection` → **Bypass list → Add bypass → Deploy keys** → selecciona la
+   llave → *Always allow* → guarda. (Opcional: agrega también `Repository admin`.)
+4. Repo → **Settings → Secrets and variables → Actions → New repository secret**:
+   `RELEASE_DEPLOY_KEY` = contenido de `release-key`.
+5. Borra la llave privada local tras crear el secret.
+
+Sin este setup, el release se hace manualmente (promoción del CHANGELOG + tag + push).
+
 ## deprecated names
 
 The package declares `replace` for `orm-universal/contracts`, `orm-universal/relational`,

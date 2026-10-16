@@ -79,6 +79,22 @@ jobs:
         if: steps.next.outputs.release == 'true'
         run: php tools/release.php --write --version=${{ steps.next.outputs.version }}
 
+      - name: Configure deploy key (bypass del ruleset de main)
+        if: steps.next.outputs.release == 'true'
+        env:
+          DEPLOY_KEY: ${{ secrets.RELEASE_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DEPLOY_KEY}" ]; then
+            echo "::error::Falta el secret RELEASE_DEPLOY_KEY (deploy key con acceso de escritura incluida en el bypass del ruleset). Ver RELEASES.md."
+            exit 1
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "${DEPLOY_KEY}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+          git remote set-url origin "git@github.com:${GITHUB_REPOSITORY}.git"
+
       - name: Commit, tag and push
         if: steps.next.outputs.release == 'true'
         run: |

@@ -14,6 +14,11 @@ Historical per-layer changelogs (before the unification) are preserved under
 
 ## [Unreleased]
 
+### Changed
+- Release workflow: el push del bot usa un deploy key incluido en el bypass del ruleset
+  `main-protection` (la app "GitHub Actions" no es elegible para el bypass); pasos de
+  configuración en `RELEASES.md`.
+
 ## [0.7.2] - 2026-10-16
 
 ### Fixed
