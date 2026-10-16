@@ -13,14 +13,14 @@ use OrmUniversal\Relational\Execution\QueryExecutor;
 use OrmUniversal\Relational\Relation\RelationDefinition;
 use OrmUniversal\Relational\Relation\RelationRegistry;
 use PDO;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Relation aggregates, EXISTS filters, builder aggregates and Eloquent-style
  * helpers against a real SQLite database.
- *
- * @group integration
  */
+#[Group('integration')]
 final class RelationAggregateTest extends TestCase
 {
     private QueryExecutor $executor;

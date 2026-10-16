@@ -14,14 +14,14 @@ use OrmUniversal\Relational\Execution\QueryExecutor;
 use PDO;
 use PDOException;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Dialect contract test against real servers. Each engine is optional: unavailable
  * servers are skipped with an explicit message, never silently passed.
- *
- * @group integration
  */
+#[Group('integration')]
 final class SqlEngineContractTest extends TestCase
 {
     /**

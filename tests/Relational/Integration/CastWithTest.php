@@ -10,11 +10,11 @@ use OrmUniversal\Relational\Dialect\SqliteDialect;
 use OrmUniversal\Relational\Driver\PdoConnection;
 use OrmUniversal\Relational\Execution\QueryExecutor;
 use PDO;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @group integration
- */
+/* */
+#[Group('integration')]
 final class CastWithTest extends TestCase
 {
     private function executor(): QueryExecutor

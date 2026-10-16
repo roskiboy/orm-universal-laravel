@@ -14,13 +14,13 @@ use OrmUniversal\Relational\Dialect\SqliteDialect;
 use OrmUniversal\Relational\Driver\PdoConnection;
 use OrmUniversal\Relational\Execution\QueryExecutor;
 use PDO;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
  * End to end engine test against a real SQLite database (in memory).
- *
- * @group integration
  */
+#[Group('integration')]
 final class SqliteEngineTest extends TestCase
 {
     private QueryExecutor $executor;

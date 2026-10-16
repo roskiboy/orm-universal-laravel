@@ -12,13 +12,13 @@ use OrmUniversal\Relational\Dialect\SqliteDialect;
 use OrmUniversal\Relational\Driver\PdoConnection;
 use OrmUniversal\Relational\Execution\QueryExecutor;
 use PDO;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Real SQLite execution for the Laravel 13 parity API added in optimize-9.
- *
- * @group integration
  */
+#[Group('integration')]
 final class ParityBuilderTest extends TestCase
 {
     private QueryExecutor $executor;

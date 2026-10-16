@@ -11,11 +11,11 @@ use OrmUniversal\Relational\Driver\PdoConnection;
 use OrmUniversal\Relational\Execution\QueryExecutor;
 use OrmUniversal\Relational\Observability\InMemoryProfiler;
 use PDO;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @group integration
- */
+/* */
+#[Group('integration')]
 final class CountFastPathTest extends TestCase
 {
     private QueryExecutor $executor;

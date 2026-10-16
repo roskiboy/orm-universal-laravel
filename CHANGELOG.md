@@ -18,6 +18,10 @@ Historical per-layer changelogs (before the unification) are preserved under
 - Tests: sintaxis compatible con PHP 8.3 en `PlatformExtrasTest` (el encadenado
   `new QueryExecutor(...)->withQueryCache()` requiere paréntesis envolventes antes de
   PHP 8.4).
+- Tests: los tests de integración usan el atributo `#[Group('integration')]` (PHPUnit 12
+  ya no lee `@group` en docblocks, y el job de CI terminaba con "No tests executed").
+- CI: MySQL 8.4 se levanta con `docker run` y espera explícita, porque el runner no logra
+  inicializarlo como service container.
 
 ## [0.7.1] - 2026-10-16
 

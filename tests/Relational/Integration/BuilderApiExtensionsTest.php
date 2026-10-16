@@ -13,13 +13,13 @@ use OrmUniversal\Relational\Driver\PdoConnection;
 use OrmUniversal\Relational\Execution\DestructiveStatementPolicy;
 use OrmUniversal\Relational\Execution\QueryExecutor;
 use PDO;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
  * End to end tests for the extended builder API (bulk, policy, inspection).
- *
- * @group integration
  */
+#[Group('integration')]
 final class BuilderApiExtensionsTest extends TestCase
 {
     private QueryExecutor $executor;

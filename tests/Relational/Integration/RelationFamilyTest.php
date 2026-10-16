@@ -14,13 +14,13 @@ use OrmUniversal\Relational\Execution\QueryExecutor;
 use OrmUniversal\Relational\Relation\RelationDefinition;
 use OrmUniversal\Relational\Relation\RelationQuery;
 use PDO;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Through, morphToMany and morphTo relation families against real SQLite.
- *
- * @group integration
  */
+#[Group('integration')]
 final class RelationFamilyTest extends TestCase
 {
     private QueryExecutor $executor;

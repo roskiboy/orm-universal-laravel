@@ -11,15 +11,15 @@ use OrmUniversal\Relational\Dialect\SqliteDialect;
 use OrmUniversal\Relational\Driver\PdoConnection;
 use OrmUniversal\Relational\Execution\QueryExecutor;
 use PDO;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
  * End to end SQLite coverage for the complex-query builder API (optimize-8):
  * subquery joins/sources, IN (subquery), EXISTS closures, aggregate HAVING,
  * window functions and recursive CTEs.
- *
- * @group integration
  */
+#[Group('integration')]
 final class ComplexQueryExecutionTest extends TestCase
 {
     private QueryExecutor $executor;

@@ -8,13 +8,13 @@ use OrmUniversal\Relational\Ast\SelectQuery;
 use OrmUniversal\Relational\Dialect\SqliteDialect;
 use OrmUniversal\Relational\Execution\BatchPlanner;
 use OrmUniversal\Relational\Optimizer\Optimizer;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
  * optimize-12: optimizer passes and adaptive batching.
- *
- * @group integration
  */
+#[Group('integration')]
 final class OptimizerAndPlannerTest extends TestCase
 {
     public function test_default_passes_include_in_to_equals_and_projection_pruning(): void

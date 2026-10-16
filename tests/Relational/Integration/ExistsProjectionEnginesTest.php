@@ -13,14 +13,14 @@ use OrmUniversal\Relational\Observability\InMemoryProfiler;
 use PDO;
 use PDOException;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
  * EXISTS projection against real servers. Unavailable engines are skipped with an
  * explicit message.
- *
- * @group integration
  */
+#[Group('integration')]
 final class ExistsProjectionEnginesTest extends TestCase
 {
     /**
