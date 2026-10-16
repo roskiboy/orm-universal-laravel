@@ -15,7 +15,7 @@ is pending on infrastructure: they are not declared stable. See `CHANGELOG.md`.
 Do not open public issues for vulnerabilities. Use GitHub's private reporting:
 
 - https://github.com/roskiboy/orm-universal-laravel/security/advisories/new
-- Alternative: contact the In-Tech maintainers through the repository.
+- Alternative: contact the maintainer (roskiboy) through the repository.
 
 Include version, affected layer/engine, description, minimal PoC, impact and mitigation.
 Indicative acknowledgement: 72 business hours.

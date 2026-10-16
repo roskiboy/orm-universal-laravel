@@ -34,7 +34,7 @@ applied consistently and in good faith.
 
 ## Reporting
 
-Private channel of the In-Tech team:
+Private reporting channel of the maintainer (roskiboy):
 
 - https://github.com/roskiboy/orm-universal-laravel/security/advisories/new
 

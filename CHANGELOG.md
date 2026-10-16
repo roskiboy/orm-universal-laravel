@@ -14,6 +14,10 @@ Historical per-layer changelogs (before the unification) are preserved under
 
 ## [Unreleased]
 
+### Fixed
+- Autoría del paquete a `roskiboy` (GitHub) en `composer.json`, `LICENSE`,
+  `SECURITY.md` y `CODE_OF_CONDUCT.md`.
+
 ## [0.7.0] - 2026-10-16
 
 ### Changed
