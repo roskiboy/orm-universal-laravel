@@ -1,0 +1,54 @@
+name: Dependabot auto-merge
+
+on: pull_request
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'roskiboy/orm-universal-laravel' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a # v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Esperar a que la CI termine (patch/minor)
+        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 120); do
+            STATES="$(gh pr checks "$PR_URL" --json state --jq '.[].state' 2>/dev/null || true)"
+            if [ -z "$STATES" ]; then
+              echo "Sin checks registrados aún (intento ${attempt}); esperando..."
+              sleep 10
+              continue
+            fi
+            if echo "$STATES" | grep -qE 'FAILURE|CANCELLED|TIMED_OUT|ACTION_REQUIRED|STARTUP_FAILURE'; then
+              echo "Checks fallidos; no se fusiona:"
+              echo "$STATES"
+              exit 1
+            fi
+            if ! echo "$STATES" | grep -qE 'PENDING|QUEUED|IN_PROGRESS|EXPECTED|WAITING'; then
+              echo "Checks completados:"
+              echo "$STATES"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "Timeout esperando los checks de CI"
+          exit 1
+
+      - name: Squash merge (patch/minor)
+        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr merge --squash --delete-branch "$PR_URL"

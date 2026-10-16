@@ -14,6 +14,11 @@ Historical per-layer changelogs (before the unification) are preserved under
 
 ## [Unreleased]
 
+### Changed
+- Dependabot: auto-merge (squash) de las actualizaciones **patch/minor** tras CI verde; las
+  actualizaciones **major** requieren revisión manual
+  (`.github/workflows/dependabot-auto-merge.yml`).
+
 ## [0.7.4] - 2026-10-16
 
 ### Fixed
