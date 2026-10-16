@@ -45,14 +45,27 @@ if ($version === null) {
     exit(1);
 }
 
+if (isset($options['notes'])) {
+    if ($body === '') {
+        $sectionPattern = '/^## \['.preg_quote($version, '/').'\][^\n]*\n(.*?)(?=^## \[|\z)/ms';
+
+        if (preg_match($sectionPattern, $content, $sectionMatches) === 1) {
+            $body = trim($sectionMatches[1]);
+        }
+    }
+
+    if ($body === '') {
+        fwrite(STDERR, "Nothing to release: no entries for [Unreleased] or [{$version}].\n");
+        exit(2);
+    }
+
+    echo $body."\n";
+    exit(0);
+}
+
 if ($body === '') {
     fwrite(STDERR, "Nothing to release: [Unreleased] is empty.\n");
     exit(2);
-}
-
-if (isset($options['notes'])) {
-    echo $body."\n";
-    exit(0);
 }
 
 $section = "## [{$version}] - {$date}\n\n{$body}\n\n";

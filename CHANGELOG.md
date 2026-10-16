@@ -14,6 +14,11 @@ Historical per-layer changelogs (before the unification) are preserved under
 
 ## [Unreleased]
 
+### Fixed
+- `tools/release.php --notes` ahora lee la sección `## [X.Y.Z]` del CHANGELOG cuando
+  `[Unreleased]` ya fue promovido por el propio workflow de release (antes el paso
+  "Create GitHub release" fallaba con "Nothing to release: [Unreleased] is empty").
+
 ## [0.7.3] - 2026-10-16
 
 ### Changed
