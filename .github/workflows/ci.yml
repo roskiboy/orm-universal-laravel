@@ -49,18 +49,6 @@ jobs:
         options: >-
           --health-cmd="healthcheck.sh --connect --innodb_initialized"
           --health-interval=10s --health-timeout=5s --health-retries=10
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ALLOW_EMPTY_ROOT_PASSWORD: '1'
-          MYSQL_DATABASE: tms_ude_test
-        ports:
-          - 3307:3306
-        options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=20
       postgres:
         image: postgres:18
         env:
@@ -93,6 +81,27 @@ jobs:
 
       - name: Install optional MongoDB library
         run: composer require --dev mongodb/mongodb:^2.4 --no-interaction --no-progress
+
+      - name: Start MySQL 8.4 (docker run; el runner no inicializa la imagen como service)
+        run: |
+          docker run -d --name mysql8 \
+            -e MYSQL_ALLOW_EMPTY_ROOT_PASSWORD=1 \
+            -e MYSQL_DATABASE=tms_ude_test \
+            -p 3307:3306 \
+            mysql:8.4
+
+      - name: Wait for MySQL 8.4
+        run: |
+          for i in $(seq 1 60); do
+            if php -r 'exit(@fsockopen("127.0.0.1", 3307) ? 0 : 1);'; then
+              echo "MySQL ready after ${i} attempts"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "MySQL did not become ready"
+          docker logs mysql8 | tail -50
+          exit 1
 
       - name: Dialect contract tests (MariaDB, MySQL, PostgreSQL) + NoSQL integration
         env:
