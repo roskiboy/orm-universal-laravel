@@ -34,7 +34,7 @@ aplicadas de forma consistente y de buena fe.
 
 ## Reporte
 
-Canal privado del equipo In-Tech:
+Canal privado del mantenedor (roskiboy):
 
 - https://github.com/roskiboy/orm-universal-laravel/security/advisories/new
 
