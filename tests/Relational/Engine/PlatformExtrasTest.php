@@ -62,10 +62,10 @@ final class PlatformExtrasTest extends TestCase
     public function test_compiled_query_cache_reuses_the_compiled_object(): void
     {
         $cache = new QueryCache(new InMemorySimpleCache, 'ude-test');
-        $executor = new QueryExecutor(
+        $executor = (new QueryExecutor(
             new PdoConnection(new PDO('sqlite::memory:'), 'cache-test'),
             SqliteDialect::make('3.49.2'),
-        )->withQueryCache($cache);
+        ))->withQueryCache($cache);
 
         $query = SelectQuery::make('users')->select('id')->where('active', true);
 
@@ -78,10 +78,10 @@ final class PlatformExtrasTest extends TestCase
     public function test_compiled_query_cache_distinguishes_projections_and_aliases(): void
     {
         $cache = new QueryCache(new InMemorySimpleCache, 'ude-test');
-        $executor = new QueryExecutor(
+        $executor = (new QueryExecutor(
             new PdoConnection(new PDO('sqlite::memory:'), 'cache-test'),
             SqliteDialect::make('3.49.2'),
-        )->withQueryCache($cache);
+        ))->withQueryCache($cache);
 
         $id = $executor->compile(SelectQuery::make('users')->select('id'));
         $name = $executor->compile(SelectQuery::make('users')->select('name'));

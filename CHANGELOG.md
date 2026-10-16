@@ -14,6 +14,11 @@ Historical per-layer changelogs (before the unification) are preserved under
 
 ## [Unreleased]
 
+### Fixed
+- Tests: sintaxis compatible con PHP 8.3 en `PlatformExtrasTest` (el encadenado
+  `new QueryExecutor(...)->withQueryCache()` requiere paréntesis envolventes antes de
+  PHP 8.4).
+
 ## [0.7.1] - 2026-10-16
 
 ### Fixed
