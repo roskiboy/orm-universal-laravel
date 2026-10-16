@@ -15,7 +15,7 @@ matrix, security patches are not guaranteed.
 Do not open public issues for vulnerabilities. Use GitHub private reporting:
 
 - https://github.com/roskiboy/orm-universal-laravel/security/advisories/new
-- Alternative: contact the In-Tech maintainers through the repository.
+- Alternative: contact the maintainer (roskiboy) through the repository.
 
 Include the package version, Laravel version, description, minimal PoC, impact, and
 mitigation. Indicative acknowledgment: 72 business hours.
