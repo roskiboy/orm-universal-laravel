@@ -1,0 +1,14 @@
+parameters:
+    level: 5
+    paths:
+        - src
+    treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        # Recordset factories intentionally return late static bindings (ADR-004).
+        - identifier: new.static
+        # RelationGraph keeps the original path for future inspection tooling.
+        - identifier: property.onlyWritten
+        # Backend classes are resolved dynamically (class_exists guards).
+        - identifier: class.notFound
+        # HasUniversalQueries is applied by host applications, not by the package itself.
+        - identifier: trait.unused

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         cacheDirectory=".phpunit.cache"
+         failOnWarning="true"
+         failOnRisky="true"
+         beStrictAboutOutputDuringTests="true"
+>
+    <testsuites>
+        <testsuite name="Contracts">
+            <directory>tests/Contracts</directory>
+        </testsuite>
+        <testsuite name="Relational">
+            <directory>tests/Relational</directory>
+        </testsuite>
+        <testsuite name="NoSql">
+            <directory>tests/NoSql</directory>
+        </testsuite>
+        <testsuite name="Laravel">
+            <directory>tests/Laravel</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>src</directory>
+        </include>
+    </source>
+    <php>
+        <env name="UDE_INTEGRATION" value="0"/>
+        <env name="UDE_MARIADB_HOST" value="127.0.0.1"/>
+        <env name="UDE_MARIADB_PORT" value="3306"/>
+        <env name="UDE_MARIADB_DATABASE" value="tms_ude_test"/>
+        <env name="UDE_MARIADB_USERNAME" value="root"/>
+        <env name="UDE_MARIADB_PASSWORD" value=""/>
+        <env name="UDE_MYSQL_HOST" value="127.0.0.1"/>
+        <env name="UDE_MYSQL_PORT" value="3307"/>
+        <env name="UDE_MYSQL_DATABASE" value="tms_ude_test"/>
+        <env name="UDE_MYSQL_USERNAME" value="root"/>
+        <env name="UDE_MYSQL_PASSWORD" value=""/>
+        <env name="UDE_PGSQL_HOST" value="127.0.0.1"/>
+        <env name="UDE_PGSQL_PORT" value="5432"/>
+        <env name="UDE_PGSQL_DATABASE" value="tms_ude_test"/>
+        <env name="UDE_PGSQL_USERNAME" value="postgres"/>
+        <env name="UDE_PGSQL_PASSWORD" value="secret"/>
+        <env name="UDE_MONGODB_URI" value="mongodb://127.0.0.1:27017"/>
+        <env name="UDE_MONGODB_DATABASE" value="tms_ude_test"/>
+        <env name="UDE_REDIS_HOST" value="127.0.0.1"/>
+        <env name="UDE_REDIS_PORT" value="6379"/>
+    </php>
+</phpunit>

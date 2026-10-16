@@ -1,0 +1,98 @@
+{
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "roskiboy/orm-universal-laravel",
+    "description": "ORM Universal Laravel - universal data platform: contracts, relational engine (AST, SQL compiler, versioned dialects, PDO, recordsets, schema, migrations), NoSQL engine (documents, filters, pipelines) and Laravel integration (provider, adapters, hybrid mode, ude:* tooling).",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "In-Tech"
+        }
+    ],
+    "homepage": "https://github.com/roskiboy/orm-universal-laravel",
+    "keywords": [
+        "laravel",
+        "persistence",
+        "database",
+        "orm",
+        "query-builder",
+        "eloquent",
+        "ude",
+        "sql",
+        "dialect",
+        "recordset",
+        "nosql",
+        "mongodb",
+        "redis"
+    ],
+    "replace": {
+        "orm-universal/contracts": "self.version",
+        "orm-universal/relational": "self.version",
+        "orm-universal/nosql": "self.version",
+        "orm-universal/laravel": "self.version"
+    },
+    "require": {
+        "php": "^8.3",
+        "ext-json": "*",
+        "ext-pdo": "*",
+        "illuminate/console": "^12.0 || ^13.0",
+        "illuminate/database": "^12.0 || ^13.0",
+        "illuminate/support": "^12.0 || ^13.0",
+        "nikic/php-parser": "^5.0",
+        "psr/log": "^3.0",
+        "psr/simple-cache": "^3.0"
+    },
+    "require-dev": {
+        "laravel/framework": "^12.0 || ^13.0",
+        "laravel/pint": "^1.24",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11.0 || ^12.0",
+        "psr/event-dispatcher": "^1.0"
+    },
+    "suggest": {
+        "ext-pdo_mysql": "MySQL and MariaDB dialects",
+        "ext-pdo_pgsql": "PostgreSQL dialect",
+        "ext-pdo_sqlite": "SQLite dialect",
+        "ext-pdo_sqlsrv": "SQL Server dialect",
+        "ext-pdo_oci": "Oracle dialect",
+        "ext-mongodb": "Required by the MongoDB driver",
+        "mongodb/mongodb": "High level MongoDB library used by the MongoDB adapter",
+        "ext-redis": "Required by the Redis driver",
+        "predis/predis": "Pure PHP alternative Redis client"
+    },
+    "autoload": {
+        "psr-4": {
+            "OrmUniversal\\Contracts\\": "src/Contracts/",
+            "OrmUniversal\\Relational\\": "src/Relational/",
+            "OrmUniversal\\NoSql\\": "src/NoSql/",
+            "OrmUniversal\\Laravel\\": "src/Laravel/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "OrmUniversal\\Contracts\\Tests\\": "tests/Contracts/",
+            "OrmUniversal\\Relational\\Tests\\": "tests/Relational/",
+            "OrmUniversal\\NoSql\\Tests\\": "tests/NoSql/",
+            "OrmUniversal\\Laravel\\Tests\\": "tests/Laravel/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "OrmUniversal\\Laravel\\OrmUniversalServiceProvider"
+            ],
+            "aliases": {
+                "OrmUniversal": "OrmUniversal\\Laravel\\Facades\\OrmUniversal"
+            }
+        }
+    },
+    "support": {
+        "source": "https://github.com/roskiboy/orm-universal-laravel",
+        "issues": "https://github.com/roskiboy/orm-universal-laravel/issues"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

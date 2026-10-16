@@ -1,0 +1,99 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - name: Check pending changelog
+        id: changelog
+        run: |
+          set -euo pipefail
+          if php tools/release.php --dry-run | grep -q '(empty: no release needed)'; then
+            echo "pending=false" >> "$GITHUB_OUTPUT"
+            echo "No entries under [Unreleased]; release skipped."
+          else
+            echo "pending=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compute next version
+        if: steps.changelog.outputs.pending == 'true'
+        id: next
+        run: |
+          set -euo pipefail
+          LAST_TAG="$(git describe --tags --abbrev=0 2>/dev/null || echo v0.0.0)"
+          echo "last=$LAST_TAG" >> "$GITHUB_OUTPUT"
+          LOG="$(git log --pretty=format:'%s%n%b' "${LAST_TAG}..HEAD" || true)"
+          MAJOR="$(echo "$LAST_TAG" | sed 's/^v//' | cut -d. -f1)"
+          MINOR="$(echo "$LAST_TAG" | sed 's/^v//' | cut -d. -f2)"
+          PATCH="$(echo "$LAST_TAG" | sed 's/^v//' | cut -d. -f3)"
+          BUMP=none
+          BREAKING=false
+          if echo "$LOG" | grep -qE '^[a-z]+(\(.+\))?!:|BREAKING CHANGE'; then BREAKING=true; fi
+          FEAT=false
+          if echo "$LOG" | grep -qE '^feat(\(.+\))?:'; then FEAT=true; fi
+          FIX=false
+          if echo "$LOG" | grep -qE '^(fix|perf)(\(.+\))?:'; then FIX=true; fi
+          if [ "$MAJOR" = "0" ]; then
+            if [ "$BREAKING" = true ]; then BUMP=minor;
+            elif [ "$FEAT" = true ] || [ "$FIX" = true ]; then BUMP=patch;
+            else BUMP=none; fi
+          else
+            if [ "$BREAKING" = true ]; then BUMP=major;
+            elif [ "$FEAT" = true ]; then BUMP=minor;
+            elif [ "$FIX" = true ]; then BUMP=patch;
+            else BUMP=none; fi
+          fi
+          if [ "$BUMP" = none ]; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "No releasable commits since $LAST_TAG."
+            exit 0
+          fi
+          case "$BUMP" in
+            major) NEXT="$((MAJOR + 1)).0.0" ;;
+            minor) NEXT="${MAJOR}.$((MINOR + 1)).0" ;;
+            patch) NEXT="${MAJOR}.${MINOR}.$((PATCH + 1))" ;;
+          esac
+          echo "release=true" >> "$GITHUB_OUTPUT"
+          echo "version=$NEXT" >> "$GITHUB_OUTPUT"
+          echo "Next version: $NEXT ($BUMP)"
+
+      - name: Update CHANGELOG
+        if: steps.next.outputs.release == 'true'
+        run: php tools/release.php --write --version=${{ steps.next.outputs.version }}
+
+      - name: Commit, tag and push
+        if: steps.next.outputs.release == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "chore(release): v${{ steps.next.outputs.version }} [skip ci]"
+          git tag "v${{ steps.next.outputs.version }}"
+          git push origin main
+          git push origin "v${{ steps.next.outputs.version }}"
+
+      - name: Create GitHub release
+        if: steps.next.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          php tools/release.php --notes --version=${{ steps.next.outputs.version }} > release-notes.md
+          gh release create "v${{ steps.next.outputs.version }}" --title "v${{ steps.next.outputs.version }}" --notes-file release-notes.md

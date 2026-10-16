@@ -1,0 +1,133 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4', '8.5']
+    name: PHP ${{ matrix.php }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo, pdo_sqlite, mbstring
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Tests (Contracts + Relational + NoSql + Laravel, SQLite in-memory)
+        run: vendor/bin/phpunit --exclude-group integration
+
+      - name: Static analysis
+        run: vendor/bin/phpstan analyse --no-progress
+
+      - name: Code style
+        run: vendor/bin/pint --test
+
+  integration:
+    runs-on: ubuntu-latest
+    name: Engines contract + benchmarks
+    services:
+      mariadb:
+        image: mariadb:11.6
+        env:
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: '1'
+          MARIADB_DATABASE: tms_ude_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ALLOW_EMPTY_ROOT_PASSWORD: '1'
+          MYSQL_DATABASE: tms_ude_test
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: secret
+          POSTGRES_DB: tms_ude_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+      mongodb:
+        image: mongo:8.0
+        ports:
+          - 27017:27017
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo, pdo_sqlite, pdo_mysql, pdo_pgsql, mbstring, mongodb, redis
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Install optional MongoDB library
+        run: composer require --dev mongodb/mongodb:^2.4 --no-interaction --no-progress
+
+      - name: Dialect contract tests (MariaDB, MySQL, PostgreSQL) + NoSQL integration
+        env:
+          UDE_MARIADB_HOST: 127.0.0.1
+          UDE_MARIADB_PORT: '3306'
+          UDE_MARIADB_DATABASE: tms_ude_test
+          UDE_MARIADB_USERNAME: root
+          UDE_MARIADB_PASSWORD: ''
+          UDE_MYSQL_HOST: 127.0.0.1
+          UDE_MYSQL_PORT: '3307'
+          UDE_MYSQL_DATABASE: tms_ude_test
+          UDE_MYSQL_USERNAME: root
+          UDE_MYSQL_PASSWORD: ''
+          UDE_PGSQL_HOST: 127.0.0.1
+          UDE_PGSQL_PORT: '5432'
+          UDE_PGSQL_DATABASE: tms_ude_test
+          UDE_PGSQL_USERNAME: postgres
+          UDE_PGSQL_PASSWORD: secret
+        run: vendor/bin/phpunit --group integration
+
+      - name: Benchmark (relational, SQLite, regression threshold)
+        run: php benchmarks/relational/benchmark.php --driver=sqlite --rows=10000 --assert-vs-pdo=5.0 --json --markdown
+
+      - name: Benchmark (relational, MariaDB)
+        env:
+          UDE_MARIADB_HOST: 127.0.0.1
+          UDE_MARIADB_PORT: '3306'
+          UDE_MARIADB_DATABASE: tms_ude_test
+          UDE_MARIADB_USERNAME: root
+          UDE_MARIADB_PASSWORD: ''
+        run: php benchmarks/relational/benchmark.php --driver=mysql --rows=10000 --json --markdown
+
+      - name: Benchmark smoke (Eloquent vs UDE, SQLite)
+        run: php benchmarks/laravel/benchmark.php --rows=2000 --assert-vs-pdo=3.0 --assert-intercept-vs-vanilla=1.75 --json --markdown
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmarks/*/results
