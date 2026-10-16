@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   tests:
     runs-on: ubuntu-latest
@@ -15,9 +18,9 @@ jobs:
         php: ['8.3', '8.4', '8.5']
     name: PHP ${{ matrix.php }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version: ${{ matrix.php }}
           extensions: pdo, pdo_sqlite, mbstring
@@ -25,6 +28,9 @@ jobs:
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Composer audit (vulnerabilidades)
+        run: composer audit --no-interaction
 
       - name: Tests (Contracts + Relational + NoSql + Laravel, SQLite in-memory)
         run: vendor/bin/phpunit --exclude-group integration
@@ -68,9 +74,9 @@ jobs:
         ports:
           - 6379:6379
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version: '8.4'
           extensions: pdo, pdo_sqlite, pdo_mysql, pdo_pgsql, mbstring, mongodb, redis
@@ -138,7 +144,7 @@ jobs:
         run: php benchmarks/laravel/benchmark.php --rows=2000 --assert-vs-pdo=3.0 --assert-intercept-vs-vanilla=1.75 --json --markdown
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: benchmark-results
           path: benchmarks/*/results

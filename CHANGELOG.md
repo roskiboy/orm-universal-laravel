@@ -19,6 +19,11 @@ Historical per-layer changelogs (before the unification) are preserved under
   `main-protection` (la app "GitHub Actions" no es elegible para el bypass); pasos de
   configuración en `RELEASES.md`.
 
+### Security
+- Workflows endurecidos: `permissions: contents: read` en CI, actions fijadas por SHA y
+  `composer audit` en el job de tests.
+- Dependabot (composer y github-actions), `CODEOWNERS` y plantillas de PR/issue.
+
 ## [0.7.2] - 2026-10-16
 
 ### Fixed
