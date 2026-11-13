@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace OrmUniversal\Laravel\Console;
 
+use OrmUniversal\Laravel\Ude;
+
 final class DoctorCommand extends BaseCommand
 {
     protected $signature = 'ude:doctor {--connection= : Conexión a inspeccionar}';
@@ -18,7 +20,7 @@ final class DoctorCommand extends BaseCommand
         $checks = [
             'PHP' => PHP_VERSION,
             'Laravel' => $this->laravel->version(),
-            'Package' => '0.1.0',
+            'Package' => Ude::VERSION,
             'Connection' => $connectionName,
             'Driver' => $driver,
             'PDO drivers' => implode(', ', \PDO::getAvailableDrivers()),

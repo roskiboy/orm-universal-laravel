@@ -19,6 +19,12 @@ Historical per-layer changelogs (before the unification) are preserved under
   actualizaciones **major** requieren revisión manual
   (`.github/workflows/dependabot-auto-merge.yml`).
 
+## [0.8.1] - 2026-11-13
+
+### Fixed
+- `ude:doctor` reports `OrmUniversal\Laravel\Ude::VERSION` (now `0.8.1`) instead
+  of a hardcoded `0.1.0`.
+
 ## [0.8.0] - 2026-11-13
 
 ### Added
