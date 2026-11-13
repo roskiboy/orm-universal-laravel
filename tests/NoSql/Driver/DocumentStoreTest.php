@@ -71,6 +71,12 @@ final class DocumentStoreTest extends TestCase
         }
 
         $driver = new MongoDbDriver('mongodb://127.0.0.1:27017', 'ude_test');
+        try {
+            $driver->count('probe');
+        } catch (\Throwable $exception) {
+            self::markTestSkipped('MongoDB server not reachable: '.$exception->getMessage());
+        }
+
         $driver->drop('probe');
         $driver->insertMany('probe', [['name' => 'ana', 'age' => 30], ['name' => 'bob', 'age' => 25]]);
 

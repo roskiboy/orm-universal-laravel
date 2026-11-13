@@ -8,6 +8,7 @@ declare(strict_types=1);
  *
  *   php benchmarks/benchmark.php --rows=5000 --json --markdown --assert-vs-pdo=3.0
  *   php benchmarks/benchmark.php --rows=10000 --assert-intercept-vs-vanilla=1.75
+ *   php benchmarks/benchmark.php --rows=5000 --assert-zero-vs-eloquent=1.0
  */
 $autoload = __DIR__.'/../../vendor/autoload.php';
 if (! is_file($autoload)) {
@@ -20,15 +21,17 @@ use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Application;
 use OrmUniversal\Laravel\Connections\UdeConnectionFactory;
+use OrmUniversal\Laravel\Pagination\LaravelPagination;
 use OrmUniversal\Relational\Builder\QueryBuilder;
 use OrmUniversal\Relational\Dialect\DialectResolver;
 use OrmUniversal\Relational\Driver\PdoConnection;
 use OrmUniversal\Relational\Execution\QueryExecutor;
 
-$options = getopt('', ['rows::', 'json', 'markdown', 'assert-vs-pdo::', 'assert-intercept-vs-vanilla::', 'output::']);
+$options = getopt('', ['rows::', 'json', 'markdown', 'assert-vs-pdo::', 'assert-intercept-vs-vanilla::', 'assert-zero-vs-eloquent::', 'output::']);
 $rows = max(100, (int) ($options['rows'] ?? 5000));
 $assertFactor = isset($options['assert-vs-pdo']) ? (float) $options['assert-vs-pdo'] : null;
 $interceptFactor = isset($options['assert-intercept-vs-vanilla']) ? (float) $options['assert-intercept-vs-vanilla'] : null;
+$zeroFactor = isset($options['assert-zero-vs-eloquent']) ? (float) $options['assert-zero-vs-eloquent'] : null;
 $output = (string) ($options['output'] ?? __DIR__.'/results');
 
 $databaseFile = tempnam(sys_get_temp_dir(), 'ude-bench');
@@ -47,12 +50,18 @@ UdeConnectionFactory::register($capsule->getDatabaseManager());
 $capsule->addConnection(['driver' => 'ude-sqlite', 'database' => $databaseFile, 'prefix' => ''], 'ude');
 
 $pdo = $capsule->getConnection()->getPdo();
-$pdo->exec('create table bench_orders (id integer primary key, customer varchar(100) not null, total decimal(10,2) not null, status varchar(20) not null)');
+$pdo->exec('create table bench_orders (id integer primary key, customer varchar(100) not null, total text not null, status varchar(20) not null, created_at datetime not null)');
+$pdo->exec('create table bench_customers (id integer primary key, name varchar(100) not null)');
 
-$insert = $pdo->prepare('insert into bench_orders (id, customer, total, status) values (?, ?, ?, ?)');
+$insertCustomer = $pdo->prepare('insert into bench_customers (id, name) values (?, ?)');
+for ($i = 1; $i <= 500; $i++) {
+    $insertCustomer->execute([$i, 'customer'.$i]);
+}
+
+$insert = $pdo->prepare('insert into bench_orders (id, customer, total, status, created_at) values (?, ?, ?, ?, ?)');
 $pdo->beginTransaction();
 for ($i = 1; $i <= $rows; $i++) {
-    $insert->execute([$i, 'customer'.($i % 500), number_format(10 + ($i % 900) / 10, 2, '.', ''), $i % 3 === 0 ? 'paid' : 'pending']);
+    $insert->execute([$i, 'customer'.($i % 500), number_format(10 + ($i % 900) / 10, 2, '.', ''), $i % 3 === 0 ? 'paid' : 'pending', '2026-01-'.str_pad((string) (($i % 28) + 1), 2, '0', STR_PAD_LEFT).' 12:30:00']);
     if ($i % 1000 === 0) {
         $pdo->commit();
         $pdo->beginTransaction();
@@ -66,7 +75,7 @@ class BenchOrder extends Model
 
     public $timestamps = false;
 
-    protected $casts = ['total' => 'decimal:2'];
+    protected $casts = ['total' => 'decimal:2', 'created_at' => 'datetime'];
 }
 
 class BenchOrderIntercepted extends BenchOrder
@@ -76,6 +85,13 @@ class BenchOrderIntercepted extends BenchOrder
 
 $dialect = DialectResolver::resolve('sqlite', (string) $pdo->query('select sqlite_version()')->fetchColumn());
 $executor = new QueryExecutor(new PdoConnection($pdo, 'bench-laravel'), $dialect);
+
+// Warm up class loading and prepared statements before measuring.
+BenchOrder::query()->limit(1)->get();
+Capsule::table('bench_orders')->limit(1)->get();
+QueryBuilder::table($executor, 'bench_orders')->limit(1)->get();
+QueryBuilder::table($executor, 'bench_orders')->limit(1)->light()->get();
+LaravelPagination::paginate(QueryBuilder::table($executor, 'bench_orders')->orderBy('id'), 1, 1, '/bench', []);
 
 $results = [];
 $measure = static function (string $label, callable $operation) use (&$results): void {
@@ -99,7 +115,25 @@ $measure('eloquent_to_array', fn (): int => count(BenchOrder::query()->get()->to
 $measure('query_builder', fn (): int => Capsule::table('bench_orders')->get()->count());
 $measure('pdo_fetch_all', fn (): int => count($pdo->query('select * from bench_orders')->fetchAll(PDO::FETCH_ASSOC)));
 $measure('ude_zero', fn (): int => count(QueryBuilder::table($executor, 'bench_orders')->get()));
+$measure('ude_zero_cast', fn (): int => count(QueryBuilder::table($executor, 'bench_orders')->castWith(['total' => 'decimal:2', 'created_at' => 'eloquent_json'])->get()));
+$measure('ude_zero_join', fn (): int => count(
+    QueryBuilder::table($executor, 'bench_orders')
+        ->fromTable('bench_orders', 'o')
+        ->leftJoin('bench_customers', 'bench_customers.name', '=', 'o.customer')
+        ->selectRaw('o.id, o.customer, o.total, bench_customers.name as customer_name')
+        ->orderBy('o.id')
+        ->zeroHydration()
+        ->get()
+));
 $measure('ude_light', fn (): int => count(QueryBuilder::table($executor, 'bench_orders')->light()->get()));
+$measure('eloquent_paginate', fn (): int => BenchOrder::query()->paginate(100, ['*'], 'page', 1)->total());
+$measure('ude_paginate_laravel', fn (): int => LaravelPagination::paginate(
+    QueryBuilder::table($executor, 'bench_orders')->orderBy('id'),
+    100,
+    1,
+    '/bench',
+    [],
+)->total());
 $measure('ude_cursor', function () use ($executor): int {
     $count = 0;
     foreach (QueryBuilder::table($executor, 'bench_orders')->cursor() as $ignored) {
@@ -108,6 +142,28 @@ $measure('ude_cursor', function () use ($executor): int {
 
     return $count;
 });
+
+// Parity guard: zero hydration + Eloquent JSON dates must match Eloquent row by row.
+$eloquentSample = BenchOrder::query()->orderBy('id')->limit(100)->get()->toArray();
+$udeSample = QueryBuilder::table($executor, 'bench_orders')
+    ->orderBy('id')
+    ->limit(100)
+    ->castWith(['total' => 'decimal:2', 'created_at' => 'eloquent_json'])
+    ->get();
+
+foreach ($eloquentSample as $index => $expected) {
+    $actual = $udeSample[$index] ?? null;
+    if ($actual === null
+        || $actual['id'] !== $expected['id']
+        || $actual['total'] !== $expected['total']
+        || $actual['created_at'] !== $expected['created_at']
+    ) {
+        fwrite(STDERR, 'Parity failure at row '.$index.': '.json_encode(['eloquent' => $expected, 'ude' => $actual]).PHP_EOL);
+        exit(1);
+    }
+}
+
+echo 'Parity OK: zero hydration matches Eloquent for 100 rows (total/created_at).'.PHP_EOL;
 
 $environment = [
     'php' => PHP_VERSION,
@@ -180,6 +236,26 @@ if ($interceptFactor !== null) {
     }
 
     echo sprintf("Assertion OK: intercepted Eloquent within %.2fx of vanilla Eloquent.\n", $interceptFactor);
+}
+
+if ($zeroFactor !== null) {
+    $eloquentIndex = null;
+    $zeroIndex = null;
+    foreach ($results as $index => $row) {
+        if ($row['mode'] === 'eloquent_to_array') {
+            $eloquentIndex = $index;
+        }
+        if ($row['mode'] === 'ude_zero_cast') {
+            $zeroIndex = $index;
+        }
+    }
+
+    if ($eloquentIndex === null || $zeroIndex === null || $results[$zeroIndex]['time_ms'] > $results[$eloquentIndex]['time_ms'] * $zeroFactor) {
+        fwrite(STDERR, 'Regression: UDE zero hydration outside the allowed factor versus Eloquent toArray.'.PHP_EOL);
+        exit(1);
+    }
+
+    echo sprintf("Assertion OK: UDE zero hydration within %.2fx of Eloquent toArray.\n", $zeroFactor);
 }
 
 @unlink($databaseFile);

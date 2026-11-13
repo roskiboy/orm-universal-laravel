@@ -74,6 +74,57 @@ Copies **only** the clauses it understands:
 Unknown clauses are **omitted, never guessed**, and the adapter documentation warns: use
 it only if the copied clauses cover the entire query.
 
+## Zero hydration and Laravel pagination
+
+For read-only lists, `zeroHydration()` returns plain arrays (no models) and
+`paginateLaravel()` returns a native `Illuminate\Pagination\LengthAwarePaginator`:
+
+```php
+use OrmUniversal\Laravel\Facades\OrmUniversal;
+
+$page = OrmUniversal::table('treasury_movements')
+    ->fromTable('treasury_movements', 'tm')
+    ->leftJoin('currencies', 'currencies.id', '=', 'tm.currency_id')
+    ->whereNull('tm.deleted_at')
+    ->selectRaw('tm.id, tm.amount, currencies.code as currency_code')
+    ->orderBy('tm.schedule_date')
+    ->orderBy('tm.id')
+    ->castWith(['schedule_date' => 'eloquent_json'])
+    ->zeroHydration()
+    ->paginateLaravel(perPage: 300, page: 2, path: '/treasury', query: ['page' => 2]);
+```
+
+Available macros (registered by `OrmUniversalServiceProvider`):
+
+| Macro | Returns |
+|---|---|
+| `paginateLaravel()` | `Illuminate\Pagination\LengthAwarePaginator` |
+| `simplePaginateLaravel()` | `Illuminate\Pagination\Paginator` |
+
+`paginateLaravel()` is terminal: it applies `LIMIT/OFFSET` to the builder. Clone
+the builder if you need to reuse it. The same adapter is available directly:
+
+```php
+use OrmUniversal\Laravel\Pagination\LaravelPagination;
+
+$page = LaravelPagination::paginate($builder, 25, 1, '/items', []);
+```
+
+Both macros preserve the hydration mode: `zeroHydration()` yields arrays,
+`light()` yields `stdClass` objects and `entity()` yields entity objects.
+
+Eloquent-compatible date serialization is available without importing Illuminate:
+
+```php
+$query->castWith([
+    'schedule_date' => 'eloquent_json',      // date-only or datetime, UTC
+    'created_at' => 'eloquent_datetime',     // Y-m-d\TH:i:s.u\Z
+]);
+```
+
+See [Types](../relational/types.md#eloquent-compatible-date-casts) for the exact
+formats.
+
 ## Hybrid-mode guarantees
 
 `LaravelCompatibilityLayer::report()` declares the invariants:

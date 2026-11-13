@@ -7,11 +7,16 @@ namespace OrmUniversal\Relational\Type;
 use BackedEnum;
 use DateTimeImmutable;
 use DateTimeInterface;
+use DateTimeZone;
 
 /**
  * Applies Laravel-style cast definitions to raw database rows inside the core,
  * without depending on Laravel. Decimals stay strings (never floats), JSON-like
  * casts decode to arrays/objects and enums resolve through their backed class.
+ *
+ * Laravel-compatible JSON date casts are available without importing Illuminate:
+ * `eloquent_date`, `eloquent_datetime` and `eloquent_json` serialize exactly like
+ * Eloquent's `serializeDate()` (`Y-m-d\T00:00:00.000000Z` / `Y-m-d\TH:i:s.u\Z`).
  *
  * @api public
  */
@@ -100,6 +105,9 @@ final class CastApplier
             'array', 'json', 'collection' => $this->decodeJson($value),
             'object' => $this->decodeJsonObject($value),
             'date', 'datetime', 'immutable_date', 'immutable_datetime', 'timestamp' => $this->toDateTime($value),
+            'eloquent_date' => $this->toEloquentDate($value),
+            'eloquent_datetime', 'eloquent_immutable_datetime', 'eloquent_timestamp' => $this->toEloquentDateTime($value),
+            'eloquent_json' => $this->toEloquentJson($value),
             'uuid' => strtolower((string) $value),
             'vector' => $this->toVector($value),
             default => $this->decimal($value, $cast),
@@ -162,6 +170,58 @@ final class CastApplier
         } catch (\Exception) {
             return $value;
         }
+    }
+
+    /**
+     * Eloquent-compatible date-only serialization: `Y-m-d\T00:00:00.000000Z`.
+     */
+    private function toEloquentDate(mixed $value): mixed
+    {
+        $date = $this->toLocalDateTime($value);
+
+        return $date?->format('Y-m-d\T00:00:00.000000\Z') ?? $value;
+    }
+
+    /**
+     * Eloquent-compatible datetime serialization (UTC, microseconds):
+     * `Y-m-d\TH:i:s.u\Z`.
+     */
+    private function toEloquentDateTime(mixed $value): mixed
+    {
+        $date = $this->toUtcDateTime($value);
+
+        return $date?->format('Y-m-d\TH:i:s.u\Z') ?? $value;
+    }
+
+    /**
+     * Eloquent-compatible JSON date/datetime: keeps the original shape (date
+     * only vs datetime) and serializes in UTC like Eloquent's `toJSON()`.
+     */
+    private function toEloquentJson(mixed $value): mixed
+    {
+        $isDateOnly = is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($value)) === 1;
+
+        return $isDateOnly
+            ? $this->toEloquentDate($value)
+            : $this->toEloquentDateTime($value);
+    }
+
+    private function toLocalDateTime(mixed $value): ?DateTimeImmutable
+    {
+        if ($value instanceof DateTimeInterface) {
+            return DateTimeImmutable::createFromInterface($value);
+        }
+
+        try {
+            return new DateTimeImmutable((string) $value, new DateTimeZone(date_default_timezone_get()));
+        } catch (\Exception) {
+            return null;
+        }
+    }
+
+    private function toUtcDateTime(mixed $value): ?DateTimeImmutable
+    {
+        return $this->toLocalDateTime($value)?->setTimezone(new DateTimeZone('UTC'));
     }
 
     /**

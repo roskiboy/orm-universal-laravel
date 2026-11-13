@@ -7,6 +7,7 @@ namespace OrmUniversal\Laravel;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Support\ServiceProvider;
@@ -44,6 +45,7 @@ use OrmUniversal\Laravel\Console\SchemaInspectCommand;
 use OrmUniversal\Laravel\Console\StubsCommand;
 use OrmUniversal\Laravel\Console\TypesMapCommand;
 use OrmUniversal\Laravel\Facades\OrmUniversal;
+use OrmUniversal\Laravel\Pagination\LaravelPagination;
 use OrmUniversal\Relational\Cache\QueryCache;
 
 /**
@@ -114,6 +116,7 @@ final class OrmUniversalServiceProvider extends ServiceProvider
         }
 
         $this->registerEloquentBridge();
+        $this->registerPagination();
         $this->registerOctaneResets();
         $this->registerAutoMonitor();
         UdeConnectionFactory::register($this->app['db']);
@@ -194,6 +197,15 @@ final class OrmUniversalServiceProvider extends ServiceProvider
             /** @var Builder $this */
             return OrmUniversal::table($this->getModel()->getTable(), $this->getModel()->getConnectionName())->recordset();
         });
+    }
+
+    private function registerPagination(): void
+    {
+        if (! class_exists(LengthAwarePaginator::class)) {
+            return;
+        }
+
+        LaravelPagination::register();
     }
 
     private function registerOctaneResets(): void

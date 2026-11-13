@@ -132,6 +132,31 @@ $builder = OrmUniversal::table('sellers')->castWith([
 - `date`/`datetime` return `DateTimeImmutable`; `vector` returns `list<float>`.
 - Unknown casts leave the value intact; `null` always passes as `null`.
 
+### Eloquent-compatible date casts
+
+These casts return strings in the exact format used by Eloquent's `serializeDate()`,
+so API payloads stay drop-in compatible:
+
+| Cast | Output |
+|---|---|
+| `eloquent_date` | `Y-m-d\T00:00:00.000000Z` |
+| `eloquent_datetime`, `eloquent_immutable_datetime`, `eloquent_timestamp` | `Y-m-d\TH:i:s.u\Z` |
+| `eloquent_json` | Date-only values use `Y-m-d\T00:00:00.000000Z`; datetimes use `Y-m-d\TH:i:s.u\Z` |
+
+```php
+$rows = OrmUniversal::table('treasury_movements')
+    ->castWith([
+        'schedule_date' => 'eloquent_json',
+        'created_at' => 'eloquent_datetime',
+    ])
+    ->zeroHydration()
+    ->get();
+```
+
+- Values without an explicit timezone are parsed as UTC; offsets are converted to UTC.
+- `null` stays `null`; invalid date strings are returned unchanged.
+- The casts are dialect-agnostic: they format the value in PHP, not with SQL functions.
+
 `applyRow()`/`applyMany()` run before hydration in `get()` and
 `first()`.
 

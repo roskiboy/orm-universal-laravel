@@ -19,6 +19,26 @@ Historical per-layer changelogs (before the unification) are preserved under
   actualizaciones **major** requieren revisión manual
   (`.github/workflows/dependabot-auto-merge.yml`).
 
+## [0.8.0] - 2026-11-13
+
+### Added
+- `paginateLaravel()` and `simplePaginateLaravel()` macros (and the
+  `OrmUniversal\Laravel\Pagination\LaravelPagination` bridge) to return native
+  `Illuminate\Pagination\LengthAwarePaginator` / `Illuminate\Pagination\Paginator`
+  instances from any UDE builder, including `zeroHydration()` rows and join queries.
+- Eloquent-compatible date casts in `CastApplier`: `eloquent_date`,
+  `eloquent_datetime`, `eloquent_immutable_datetime`, `eloquent_timestamp` and
+  `eloquent_json` (`Y-m-d\T00:00:00.000000Z` / `Y-m-d\TH:i:s.u\Z`, UTC).
+- `ZeroHydrationParityTest` (row-by-row Eloquent parity, no model instantiation)
+  and zero-hydration/pagination scenarios in the Laravel benchmark, including a
+  parity guard and `--assert-zero-vs-eloquent`.
+
+### Changed
+- The Laravel service provider registers the pagination macros through
+  `LaravelPagination`, keeping `Relational` free of Illuminate dependencies.
+- Package docs (`docs/laravel/eloquent.md`, `docs/relational/types.md`) document
+  zero hydration, Laravel pagination and Eloquent-compatible date serialization.
+
 ## [0.7.4] - 2026-10-16
 
 ### Fixed
