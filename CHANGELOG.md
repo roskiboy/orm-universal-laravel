@@ -19,6 +19,14 @@ Historical per-layer changelogs (before the unification) are preserved under
   actualizaciones **major** requieren revisión manual
   (`.github/workflows/dependabot-auto-merge.yml`).
 
+## [0.8.2] - 2026-11-13
+
+### Fixed
+- `QueryBuilder::pluck()` now selects only the requested column (and optional
+  key), matching Laravel semantics. This also makes `distinct()->pluck()` return
+  distinct values instead of applying `DISTINCT` to every selected column.
+  Added a regression test in `ComplexQueryExecutionTest`.
+
 ## [0.8.1] - 2026-11-13
 
 ### Fixed

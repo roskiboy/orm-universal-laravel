@@ -229,4 +229,20 @@ final class ComplexQueryExecutionTest extends TestCase
 
         self::assertSame([1, 2, 3], array_map(static fn (mixed $id): int => (int) $id, $rows));
     }
+
+    public function test_pluck_selects_only_the_requested_column_and_keeps_distinct(): void
+    {
+        QueryBuilder::table($this->executor, 'orders')->insertMany([[
+            'id' => 4,
+            'seller_id' => 1,
+            'amount' => 10,
+        ]]);
+
+        $values = QueryBuilder::table($this->executor, 'orders')
+            ->distinct()
+            ->orderBy('amount')
+            ->pluck('amount');
+
+        self::assertSame([5, 10, 20], array_map(static fn (mixed $value): int => (int) $value, $values));
+    }
 }

@@ -1345,7 +1345,10 @@ final class QueryBuilder implements QueryObjectInterface
      */
     public function pluck(string $column, ?string $key = null): array
     {
-        $records = $this->get();
+        $builder = clone $this;
+        $builder->select(...($key === null ? [$column] : [$column, $key]));
+
+        $records = $builder->get();
         $values = [];
 
         foreach ($records as $record) {

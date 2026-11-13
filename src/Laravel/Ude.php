@@ -27,7 +27,7 @@ use OrmUniversal\Relational\Type\TypeRegistry;
  */
 final class Ude
 {
-    public const VERSION = '0.8.1';
+    public const VERSION = '0.8.2';
 
     public function __construct(
         private readonly DialectRegistry $dialects = new DialectRegistry,
